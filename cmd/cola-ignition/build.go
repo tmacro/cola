@@ -144,19 +144,14 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		},
 	})
 
-	if len(config.Users) > 0 {
-		users := make([]clcTypes.User, len(config.Users))
-		for i, user := range config.Users {
-			users[i] = clcTypes.User{
-				Name:              user.Username,
-				Groups:            user.Groups,
-				HomeDir:           user.HomeDir,
-				Shell:             user.Shell,
-				SSHAuthorizedKeys: user.SSHAuthorizedKeys,
-			}
-		}
-
-		clc.Passwd.Users = users
+	for _, user := range config.Users {
+		clc.Passwd.Users = append(clc.Passwd.Users, clcTypes.User{
+			Name:              user.Username,
+			Groups:            user.Groups,
+			HomeDir:           user.HomeDir,
+			Shell:             user.Shell,
+			SSHAuthorizedKeys: user.SSHAuthorizedKeys,
+		})
 	}
 
 	if len(config.Extensions) > 0 {
@@ -206,22 +201,19 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		})
 	}
 
-	if len(config.Containers) > 0 {
-		for _, container := range config.Containers {
-			contents, err := templateContainerUnitContents(container)
-			if err != nil {
-				return nil, fmt.Errorf("failed to format container unit contents: %v", err)
-			}
-
-			clc.Storage.Files = append(clc.Storage.Files, clcTypes.File{
-				Path:     formatContainerUnitPath(container.Name),
-				Mode:     Ptr(0644),
-				Contents: clcTypes.FileContents{Inline: contents},
-			})
+	for _, container := range config.Containers {
+		contents, err := templateContainerUnitContents(container)
+		if err != nil {
+			return nil, fmt.Errorf("failed to format container unit contents: %v", err)
 		}
+
+		clc.Storage.Files = append(clc.Storage.Files, clcTypes.File{
+			Path:     formatContainerUnitPath(container.Name),
+			Mode:     Ptr(0644),
+			Contents: clcTypes.FileContents{Inline: contents},
+		})
 	}
 
-	// if len(config.Files) > 0 {
 	for _, file := range config.Files {
 		mode, err := parseOctal(file.Mode)
 		if err != nil {
@@ -258,9 +250,7 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 
 		clc.Storage.Files = append(clc.Storage.Files, f)
 	}
-	// }
 
-	// if len(config.Directories) > 0 {
 	for _, dir := range config.Directories {
 		mode, err := parseOctal(dir.Mode)
 		if err != nil {
@@ -281,22 +271,18 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 
 		clc.Storage.Directories = append(clc.Storage.Directories, d)
 	}
-	// }
 
-	if len(config.Mounts) > 0 {
-		for _, mount := range config.Mounts {
-			contents, err := templateSystemdMountContents(mount)
-			if err != nil {
-				return nil, fmt.Errorf("failed to format systemd mount contents: %v", err)
-			}
-
-			clc.Systemd.Units = append(clc.Systemd.Units, clcTypes.SystemdUnit{
-				Name:     formatMountUnitPath(mount.MountPoint),
-				Enabled:  Ptr(true),
-				Contents: contents,
-			})
+	for _, mount := range config.Mounts {
+		contents, err := templateSystemdMountContents(mount)
+		if err != nil {
+			return nil, fmt.Errorf("failed to format systemd mount contents: %v", err)
 		}
 
+		clc.Systemd.Units = append(clc.Systemd.Units, clcTypes.SystemdUnit{
+			Name:     formatMountUnitPath(mount.MountPoint),
+			Enabled:  Ptr(true),
+			Contents: contents,
+		})
 	}
 
 	return convertCLConfig(clc)
