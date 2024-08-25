@@ -1,0 +1,11 @@
+[Unit]
+Description=sysext-update post-update hook
+PartOf=systemd-sysupdate.service
+After=systemd-sysupdate.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/bin/sysext-update post-update
+
+[Install]
+WantedBy=systemd-sysupdate.service

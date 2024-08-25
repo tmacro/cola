@@ -1,0 +1,11 @@
+[Unit]
+Description=sysext-update pre-update hook
+PartOf=systemd-sysupdate.service
+Before=systemd-sysupdate.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/bin/sysext-update pre-update
+
+[Install]
+WantedBy=systemd-sysupdate.service
