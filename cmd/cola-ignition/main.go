@@ -8,15 +8,14 @@ import (
 	"path/filepath"
 
 	"github.com/alecthomas/kong"
-	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/rs/zerolog"
 )
 
 var CLI struct {
 	LogLevel  string `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"debug"`
 	LogFormat string `enum:"json,text" default:"text" help:"Set the log format. (json, text)"`
-	Config    string `short:"c" help:"Path to the configuration file." type:"existingfile" default:"appliance.hcl"`
-	Base      string `short:"b" help:"Use this config as a base to extend from." type:"existingfile"`
+	Config    string `short:"c" help:"Path to the configuration file." default:"appliance.hcl"`
+	Base      string `short:"b" help:"Use this config as a base to extend from."`
 	Output    string `short:"o" help:"Output file."`
 }
 
@@ -40,15 +39,32 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to get absolute path to configuration file")
 	}
 
-	var config ApplianceConfig
-	err = hclsimple.DecodeFile(configPath, nil, &config)
+	cfgFi, err := os.Stat(configPath)
+	if os.IsNotExist(err) {
+		logger.Fatal().Msg("Configuration file does not exist")
+	} else if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to stat configuration file")
+	}
+
+	configDir := filepath.Dir(configPath)
+	if cfgFi.IsDir() {
+		configDir = configPath
+	}
+
+	config, err := ReadConfig(configPath, true)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to load configuration")
 	}
 
 	if CLI.Base != "" {
-		var baseCfg ApplianceConfig
-		err := hclsimple.DecodeFile(CLI.Base, nil, &baseCfg)
+		_, err := os.Stat(CLI.Base)
+		if os.IsNotExist(err) {
+			logger.Fatal().Msg("Base configuration does not exist")
+		} else if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to stat base configuration")
+		}
+
+		baseCfg, err := ReadConfig(CLI.Base, false)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Failed to load base configuration")
 		}
@@ -57,7 +73,7 @@ func main() {
 	}
 
 	logger.Info().Interface("config", config).Msg("Configuration loaded")
-	ignCfg, err := buildIgnitionConfig(configPath, config)
+	ignCfg, err := buildIgnitionConfig(configDir, config)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to build Ignition config")
 	}

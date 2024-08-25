@@ -133,23 +133,7 @@ func formatMountUnitPath(mountPoint string) string {
 	return fmt.Sprintf("/etc/systemd/system/%s.mount", mountName)
 }
 
-func mergeConfigs(base, override ApplianceConfig) ApplianceConfig {
-	if override.System.Hostname != "" {
-		base.System.Hostname = override.System.Hostname
-	}
-
-	if override.System.Timezone != "" {
-		base.System.Timezone = override.System.Timezone
-	}
-
-	base.Users = append(base.Users, override.Users...)
-	base.Extensions = append(base.Extensions, override.Extensions...)
-	base.Containers = append(base.Containers, override.Containers...)
-
-	return base
-}
-
-func buildIgnitionConfig(configPath string, config ApplianceConfig) (*ignitionTypes.Config, error) {
+func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTypes.Config, error) {
 	clc := defaultCLConfig()
 
 	clc.Storage.Files = append(clc.Storage.Files, clcTypes.File{
@@ -261,7 +245,7 @@ func buildIgnitionConfig(configPath string, config ApplianceConfig) (*ignitionTy
 		} else if file.SourcePath != "" {
 			path := file.SourcePath
 			if !filepath.IsAbs(file.SourcePath) {
-				path = filepath.Join(filepath.Dir(configPath), file.SourcePath)
+				path = filepath.Join(configDir, file.SourcePath)
 			}
 			content, err := os.ReadFile(path)
 			if err != nil {
