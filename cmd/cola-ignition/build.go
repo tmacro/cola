@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
-	"text/template"
 
 	clConfig "github.com/flatcar/container-linux-config-transpiler/config"
 	clcTypes "github.com/flatcar/container-linux-config-transpiler/config/types"
 	ignitionTypes "github.com/flatcar/ignition/config/v2_3/types"
+	"github.com/tmacro/cola/internal/templates"
+	"github.com/tmacro/cola/pkg/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -133,18 +133,18 @@ func formatMountUnitPath(mountPoint string) string {
 	return fmt.Sprintf("/etc/systemd/system/%s.mount", mountName)
 }
 
-func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTypes.Config, error) {
+func buildIgnitionConfig(cfg *config.ApplianceConfig) (*ignitionTypes.Config, error) {
 	clc := defaultCLConfig()
 
 	clc.Storage.Files = append(clc.Storage.Files, clcTypes.File{
 		Path: "/etc/hostname",
 		Mode: Ptr(0644),
 		Contents: clcTypes.FileContents{
-			Inline: config.System.Hostname + "\n",
+			Inline: cfg.System.Hostname + "\n",
 		},
 	})
 
-	for _, user := range config.Users {
+	for _, user := range cfg.Users {
 		clc.Passwd.Users = append(clc.Passwd.Users, clcTypes.User{
 			Name:              user.Username,
 			Groups:            user.Groups,
@@ -154,7 +154,7 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		})
 	}
 
-	if len(config.Extensions) > 0 {
+	if len(cfg.Extensions) > 0 {
 		clc.Storage.Files = append(clc.Storage.Files, defaultExtensionFiles()...)
 		clc.Systemd.Units = append(clc.Systemd.Units, defaultExtensionUnits()...)
 
@@ -165,7 +165,7 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 			},
 		}
 
-		for _, extension := range config.Extensions {
+		for _, extension := range cfg.Extensions {
 			clc.Storage.Links = append(clc.Storage.Links, clcTypes.Link{
 				Path:   formatExtensionLinkPath(extension.Name),
 				Target: formatExtensionTargetPath(extension.Name, extension.Version, extension.Arch),
@@ -201,8 +201,8 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		})
 	}
 
-	for _, container := range config.Containers {
-		contents, err := templateContainerUnitContents(container)
+	for _, container := range cfg.Containers {
+		contents, err := templates.SystemdContainer(container)
 		if err != nil {
 			return nil, fmt.Errorf("failed to format container unit contents: %v", err)
 		}
@@ -214,7 +214,7 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		})
 	}
 
-	for _, file := range config.Files {
+	for _, file := range cfg.Files {
 		mode, err := parseOctal(file.Mode)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse file mode %s: %v", file.Mode, err)
@@ -235,11 +235,7 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		if file.Inline != "" {
 			f.Contents.Inline = file.Inline
 		} else if file.SourcePath != "" {
-			path := file.SourcePath
-			if !filepath.IsAbs(file.SourcePath) {
-				path = filepath.Join(configDir, file.SourcePath)
-			}
-			content, err := os.ReadFile(path)
+			content, err := os.ReadFile(file.SourcePath)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read file %s: %v", file.SourcePath, err)
 			}
@@ -251,7 +247,7 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		clc.Storage.Files = append(clc.Storage.Files, f)
 	}
 
-	for _, dir := range config.Directories {
+	for _, dir := range cfg.Directories {
 		mode, err := parseOctal(dir.Mode)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse file mode %s: %v", dir.Mode, err)
@@ -272,8 +268,8 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		clc.Storage.Directories = append(clc.Storage.Directories, d)
 	}
 
-	for _, mount := range config.Mounts {
-		contents, err := templateSystemdMountContents(mount)
+	for _, mount := range cfg.Mounts {
+		contents, err := templates.SystemdMount(mount)
 		if err != nil {
 			return nil, fmt.Errorf("failed to format systemd mount contents: %v", err)
 		}
@@ -285,40 +281,42 @@ func buildIgnitionConfig(configDir string, config *ApplianceConfig) (*ignitionTy
 		})
 	}
 
+	for _, iface := range cfg.Interfaces {
+		ifaceNet, err := templates.SystemdNetwork(iface)
+		if err != nil {
+			return nil, fmt.Errorf("failed to format systemd network contents: %v", err)
+		}
+
+		clc.Networkd.Units = append(clc.Networkd.Units, clcTypes.NetworkdUnit{
+			Name:     "10-" + iface.Name + ".network",
+			Contents: ifaceNet,
+		})
+
+		for _, vlan := range iface.VLANs {
+			vlanNet, err := templates.SystemdVlanNetwork(vlan)
+			if err != nil {
+				return nil, fmt.Errorf("failed to format systemd vlan network contents: %v", err)
+			}
+
+			clc.Networkd.Units = append(clc.Networkd.Units, clcTypes.NetworkdUnit{
+				Name:     "20-" + vlan.Name + ".network",
+				Contents: vlanNet,
+			})
+
+			vlanNetdev, err := templates.SystemdVlanNetDev(vlan)
+			if err != nil {
+				return nil, fmt.Errorf("failed to format systemd vlan netdev contents: %v", err)
+			}
+
+			clc.Networkd.Units = append(clc.Networkd.Units, clcTypes.NetworkdUnit{
+				Name:     "00-" + vlan.Name + ".netdev",
+				Contents: vlanNetdev,
+			})
+		}
+
+	}
+
 	return convertCLConfig(clc)
-}
-
-func tplJoin(sep string, s ...string) string {
-	return strings.Join(s, sep)
-}
-
-var containerUnitTpl = template.Must(
-	template.New("containerUnit").
-		Funcs(template.FuncMap{"join": tplJoin}).
-		Parse(mustGetEmbeddedFile("container_unit.tpl")))
-
-func templateContainerUnitContents(container Container) (string, error) {
-	buf := new(strings.Builder)
-	err := containerUnitTpl.Execute(buf, container)
-	if err != nil {
-		return "", fmt.Errorf("failed to render container unit template: %v", err)
-	}
-
-	return buf.String(), nil
-}
-
-var systemdMountTpl = template.Must(
-	template.New("systemdMount").
-		Parse(mustGetEmbeddedFile("systemd_mount.tpl")))
-
-func templateSystemdMountContents(mount Mount) (string, error) {
-	buf := new(strings.Builder)
-	err := systemdMountTpl.Execute(buf, mount)
-	if err != nil {
-		return "", fmt.Errorf("failed to render systemd mount template: %v", err)
-	}
-
-	return buf.String(), nil
 }
 
 func convertCLConfig(cfg *clcTypes.Config) (*ignitionTypes.Config, error) {

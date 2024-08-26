@@ -1,22 +1,21 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/alecthomas/kong"
 	"github.com/rs/zerolog"
+	"github.com/tmacro/cola/pkg/config"
 )
 
 var CLI struct {
-	LogLevel  string `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"debug"`
-	LogFormat string `enum:"json,text" default:"text" help:"Set the log format. (json, text)"`
-	Config    string `short:"c" help:"Path to the configuration file." default:"appliance.hcl"`
-	Base      string `short:"b" help:"Use this config as a base to extend from."`
-	Output    string `short:"o" help:"Output file."`
+	LogLevel  string   `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"debug"`
+	LogFormat string   `enum:"json,text" default:"text" help:"Set the log format. (json, text)"`
+	Config    []string `short:"c" help:"Path to the configuration file." default:"appliance.hcl" type:"path"`
+	Base      []string `short:"b" help:"Use this config as a base to extend from." type:"path"`
+	Output    string   `short:"o" help:"Output file."`
 }
 
 func main() {
@@ -30,56 +29,21 @@ func main() {
 
 	logger := createLogger(CLI.LogLevel, CLI.LogFormat)
 
-	ctx := context.Background()
-
-	ctx = logger.WithContext(ctx)
-
-	configPath, err := filepath.Abs(CLI.Config)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to get absolute path to configuration file")
-	}
-
-	cfgFi, err := os.Stat(configPath)
-	if os.IsNotExist(err) {
-		logger.Fatal().Msg("Configuration file does not exist")
-	} else if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to stat configuration file")
-	}
-
-	configDir := filepath.Dir(configPath)
-	if cfgFi.IsDir() {
-		configDir = configPath
-	}
-
-	config, err := ReadConfig(configPath, true)
+	cfg, err := loadConfig()
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to load configuration")
 	}
 
-	if CLI.Base != "" {
-		_, err := os.Stat(CLI.Base)
-		if os.IsNotExist(err) {
-			logger.Fatal().Msg("Base configuration does not exist")
-		} else if err != nil {
-			logger.Fatal().Err(err).Msg("Failed to stat base configuration")
-		}
+	logger.Trace().Interface("config", cfg).Msg("Configuration loaded")
 
-		baseCfg, err := ReadConfig(CLI.Base, false)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("Failed to load base configuration")
-		}
-		logger.Info().Interface("base_config", baseCfg).Msg("Base configuration loaded")
-		config = mergeConfigs(baseCfg, config)
-	}
-
-	logger.Info().Interface("config", config).Msg("Configuration loaded")
-	ignCfg, err := buildIgnitionConfig(configDir, config)
+	ignCfg, err := buildIgnitionConfig(cfg)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to build Ignition config")
 	}
 
-	logger.Info().Interface("ignition", ignCfg).Msg("Ignition config built")
-	cfg, err := json.MarshalIndent(&ignCfg, "", "  ")
+	logger.Trace().Interface("ignition", ignCfg).Msg("Ignition config built")
+
+	ignJson, err := json.MarshalIndent(&ignCfg, "", "  ")
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to marshal Ignition config")
 	}
@@ -94,7 +58,7 @@ func main() {
 		output = os.Stdout
 	}
 
-	_, err = output.Write(cfg)
+	_, err = output.Write(ignJson)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to write Ignition config")
 	}
@@ -127,4 +91,30 @@ func createLogger(level, format string) zerolog.Logger {
 		panic("invalid log format: " + format)
 	}
 	return zerolog.New(writer).Level(lvl).With().Timestamp().Logger()
+}
+
+func loadConfig() (*config.ApplianceConfig, error) {
+	var baseCfg *config.ApplianceConfig
+	var err error
+
+	if len(CLI.Base) > 0 {
+		baseCfg, err = config.ReadConfig(CLI.Base, false)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	cfg, err := config.ReadConfig(CLI.Config, true)
+	if err != nil {
+		return nil, err
+	}
+
+	merged := config.MergeConfigs(baseCfg, cfg)
+
+	err = config.ValidateConfig(merged)
+	if err != nil {
+		return nil, err
+	}
+
+	return merged, nil
 }
