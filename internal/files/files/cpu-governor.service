@@ -1,0 +1,11 @@
+[Unit]
+Description=Enable CPU power saving
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=-/etc/default/cpu_governor
+ExecStart=/usr/local/bin/cpu-governor.sh
+
+[Install]
+WantedBy=multi-user.target

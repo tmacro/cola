@@ -9,6 +9,7 @@ import (
 	clConfig "github.com/flatcar/container-linux-config-transpiler/config"
 	clcTypes "github.com/flatcar/container-linux-config-transpiler/config/types"
 	ignitionTypes "github.com/flatcar/ignition/config/v2_3/types"
+	"github.com/tmacro/cola/internal/files"
 	"github.com/tmacro/cola/internal/templates"
 	"github.com/tmacro/cola/pkg/config"
 	"gopkg.in/yaml.v3"
@@ -34,6 +35,13 @@ func defaultCLConfig() *clcTypes.Config {
 						Inline: "C+ /etc/containers - - - - /usr/share/podman/etc/containers\n",
 					},
 				},
+				{
+					Path: "/etc/default/cpu_governor",
+					Mode: Ptr(0644),
+					Contents: clcTypes.FileContents{
+						Inline: "conservative\n",
+					},
+				},
 			},
 		},
 		Systemd: clcTypes.Systemd{
@@ -41,7 +49,12 @@ func defaultCLConfig() *clcTypes.Config {
 				{
 					Name:     "cpu-governor.service",
 					Enabled:  Ptr(true),
-					Contents: mustGetEmbeddedFile("cpu-governor.service"),
+					Contents: files.MustGetEmbeddedFile("cpu-governor.service"),
+				},
+				{
+					Name:     "cpu-governor.sh",
+					Enabled:  Ptr(true),
+					Contents: files.MustGetEmbeddedFile("cpu-governor.sh"),
 				},
 			},
 		},
@@ -54,7 +67,7 @@ func defaultExtensionFiles() []clcTypes.File {
 			Path: "/opt/bin/sysext-update",
 			Mode: Ptr(0755),
 			Contents: clcTypes.FileContents{
-				Inline: mustGetEmbeddedFile("sysext-update.sh"),
+				Inline: files.MustGetEmbeddedFile("sysext-update.sh"),
 			},
 		},
 		{
@@ -78,12 +91,12 @@ func defaultExtensionUnits() []clcTypes.SystemdUnit {
 		{
 			Name:     "sysext-pre-update.service",
 			Enabled:  Ptr(true),
-			Contents: mustGetEmbeddedFile("sysext-pre-update.service"),
+			Contents: files.MustGetEmbeddedFile("sysext-pre-update.service"),
 		},
 		{
 			Name:     "sysext-post-update.service",
 			Enabled:  Ptr(true),
-			Contents: mustGetEmbeddedFile("sysext-post-update.service"),
+			Contents: files.MustGetEmbeddedFile("sysext-post-update.service"),
 		},
 	}
 }
