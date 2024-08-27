@@ -1,13 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"io"
 	"os"
 
 	"github.com/alecthomas/kong"
 	"github.com/rs/zerolog"
 	"github.com/tmacro/cola/pkg/config"
+	"github.com/tmacro/cola/pkg/ignition"
 )
 
 var CLI struct {
@@ -36,16 +36,9 @@ func main() {
 
 	logger.Trace().Interface("config", cfg).Msg("Configuration loaded")
 
-	ignCfg, err := buildIgnitionConfig(cfg)
+	ignJson, err := ignition.Generate(cfg)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to build Ignition config")
-	}
-
-	logger.Trace().Interface("ignition", ignCfg).Msg("Ignition config built")
-
-	ignJson, err := json.MarshalIndent(&ignCfg, "", "  ")
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to marshal Ignition config")
+		logger.Fatal().Err(err).Msg("Failed to generate Ignition config")
 	}
 
 	var output io.Writer

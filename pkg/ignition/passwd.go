@@ -1,31 +1,11 @@
 package ignition
 
 import (
-	"errors"
+	"fmt"
 
 	ignitionTypes "github.com/coreos/ignition/v2/config/v3_4/types"
 	"github.com/tmacro/cola/pkg/config"
 )
-
-var (
-	ErrDuplicateUser = errors.New("duplicate user")
-)
-
-func generateUsers(cfg *config.ApplianceConfig, g *generator) error {
-	for _, user := range cfg.Users {
-		ignUser := ignitionTypes.PasswdUser{
-			Name:              user.Username,
-			Groups:            toGroup(user.Groups),
-			SSHAuthorizedKeys: toSSHAuthorizedKeys(user.SSHAuthorizedKeys),
-			HomeDir:           toPtr(user.HomeDir),
-			Shell:             toPtr(user.Shell),
-		}
-
-		g.Users = append(g.Users, ignUser)
-	}
-
-	return nil
-}
 
 func toGroup(groups []string) []ignitionTypes.Group {
 	if len(groups) == 0 {
@@ -51,4 +31,32 @@ func toSSHAuthorizedKeys(keys []string) []ignitionTypes.SSHAuthorizedKey {
 	}
 
 	return ignKeys
+}
+
+func generateUsers(cfg *config.ApplianceConfig, g *generator) error {
+	for _, user := range cfg.Users {
+		ignUser := ignitionTypes.PasswdUser{
+			Name:              user.Username,
+			Groups:            toGroup(user.Groups),
+			SSHAuthorizedKeys: toSSHAuthorizedKeys(user.SSHAuthorizedKeys),
+			HomeDir:           toPtr(user.HomeDir),
+			Shell:             toPtr(user.Shell),
+		}
+
+		g.Users = append(g.Users, ignUser)
+	}
+
+	return nil
+}
+
+func validateUsers(g *generator) error {
+	users := make(map[string]struct{})
+	for _, user := range g.Users {
+		if _, ok := users[user.Name]; ok {
+			return fmt.Errorf("%w: %s", ErrDuplicateUser, user.Name)
+		}
+		users[user.Name] = struct{}{}
+	}
+
+	return nil
 }

@@ -1,7 +1,6 @@
 package ignition
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -10,11 +9,6 @@ import (
 	"github.com/tmacro/cola/internal/files"
 	"github.com/tmacro/cola/pkg/config"
 	"github.com/vincent-petithory/dataurl"
-)
-
-var (
-	ErrDuplicateFile = errors.New("duplicate file")
-	ErrDuplicateUnit = errors.New("duplicate unit")
 )
 
 var defaultExtensionFiles = []ignitionTypes.File{
