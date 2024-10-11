@@ -52,27 +52,12 @@ type generator struct {
 }
 
 func (g *generator) Ignition(cfg *config.ApplianceConfig) (*ignitionTypes.Config, error) {
-	return g.generate(cfg)
-}
-
-func (g *generator) generate(cfg *config.ApplianceConfig) (*ignitionTypes.Config, error) {
-	gens := []ignitionGenerator{
-		generateUsers,
-		generateContainers,
-		generateExtensions,
-		generateInterfaces,
-		generateFiles,
-		generateDirectories,
+	err := g.generate(cfg)
+	if err != nil {
+		return nil, err
 	}
 
-	for _, gen := range gens {
-		err := gen(cfg, g)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err := g.validate()
+	err = g.validate()
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +70,26 @@ func (g *generator) generate(cfg *config.ApplianceConfig) (*ignitionTypes.Config
 	ignCfg.Systemd.Units = g.Units
 
 	return &ignCfg, nil
+}
+
+func (g *generator) generate(cfg *config.ApplianceConfig) error {
+	gens := []ignitionGenerator{
+		generateUsers,
+		generateContainers,
+		generateExtensions,
+		generateInterfaces,
+		generateFiles,
+		generateDirectories,
+	}
+
+	for _, gen := range gens {
+		err := gen(cfg, g)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (g *generator) validate() error {
