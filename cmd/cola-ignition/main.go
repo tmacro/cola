@@ -11,11 +11,12 @@ import (
 )
 
 var CLI struct {
-	LogLevel  string   `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"debug"`
-	LogFormat string   `enum:"json,text" default:"text" help:"Set the log format. (json, text)"`
-	Config    []string `short:"c" help:"Path to the configuration file." default:"appliance.hcl" type:"path"`
-	Base      []string `short:"b" help:"Use this config as a base to extend from." type:"path"`
-	Output    string   `short:"o" help:"Output file."`
+	LogLevel          string   `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"debug"`
+	LogFormat         string   `enum:"json,text" default:"text" help:"Set the log format. (json, text)"`
+	Config            []string `short:"c" help:"Path to the configuration file." default:"appliance.hcl" type:"path"`
+	Base              []string `short:"b" help:"Use this config as a base to extend from." type:"path"`
+	Output            string   `short:"o" help:"Output file."`
+	BundledExtensions bool     `help:"Assume extensions are already bundled in the image."`
 }
 
 func main() {

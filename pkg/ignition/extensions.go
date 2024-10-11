@@ -30,7 +30,7 @@ var defaultExtensionFiles = []ignitionTypes.File{
 		FileEmbedded1: ignitionTypes.FileEmbedded1{
 			Mode: toPtr(0644),
 			Contents: ignitionTypes.Resource{
-				Source: toPtr("https://github.com/flatcar/sysext-bakery/releases/download/latest/noop.conf"),
+				Source: toPtr(toDataUrl(files.MustGetEmbeddedFile("noop.conf"))),
 			},
 		},
 	},
@@ -69,41 +69,43 @@ func generateExtensions(cfg *config.ApplianceConfig, g *generator) error {
 	}
 
 	for _, ext := range cfg.Extensions {
-		extPath := fmt.Sprintf("/opt/extensions/%s/%s", ext.Name, formatExtensionName(ext.Name, ext.Version, ext.Arch))
+		extPath := fmt.Sprintf("/opt/extensions/%s/%s.raw", ext.Name, FormatExtensionName(ext.Name, ext.Version, ext.Arch))
 
-		g.Links = append(g.Links, ignitionTypes.Link{
-			Node: ignitionTypes.Node{
-				Path: "/etc/extensions/" + ext.Name + ".raw",
-			},
-			LinkEmbedded1: ignitionTypes.LinkEmbedded1{
-				Hard:   toPtr(false),
-				Target: toPtr(extPath),
-			},
-		})
-
-		g.Files = append(g.Files, ignitionTypes.File{
-			Node: ignitionTypes.Node{
-				Path: extPath,
-			},
-			FileEmbedded1: ignitionTypes.FileEmbedded1{
-				Mode: toPtr(0644),
-				Contents: ignitionTypes.Resource{
-					Source: toPtr(formatExtensionURL(ext.BakeryUrl, ext.Name, ext.Version, ext.Arch)),
+		if !g.BundledExtensions {
+			g.Links = append(g.Links, ignitionTypes.Link{
+				Node: ignitionTypes.Node{
+					Path: "/etc/extensions/" + ext.Name + ".raw",
 				},
-			},
-		})
-
-		g.Files = append(g.Files, ignitionTypes.File{
-			Node: ignitionTypes.Node{
-				Path: fmt.Sprintf("/etc/sysupdate.%s.d/%s.conf", ext.Name, ext.Name),
-			},
-			FileEmbedded1: ignitionTypes.FileEmbedded1{
-				Mode: toPtr(0644),
-				Contents: ignitionTypes.Resource{
-					Source: toPtr(formatExtensionTransferConfigUrl(ext.BakeryUrl, ext.Name)),
+				LinkEmbedded1: ignitionTypes.LinkEmbedded1{
+					Hard:   toPtr(false),
+					Target: toPtr(extPath),
 				},
-			},
-		})
+			})
+
+			g.Files = append(g.Files, ignitionTypes.File{
+				Node: ignitionTypes.Node{
+					Path: extPath,
+				},
+				FileEmbedded1: ignitionTypes.FileEmbedded1{
+					Mode: toPtr(0644),
+					Contents: ignitionTypes.Resource{
+						Source: toPtr(FormatExtensionURL(ext.BakeryUrl, ext.Name, ext.Version, ext.Arch)),
+					},
+				},
+			})
+
+			g.Files = append(g.Files, ignitionTypes.File{
+				Node: ignitionTypes.Node{
+					Path: fmt.Sprintf("/etc/sysupdate.%s.d/%s.conf", ext.Name, ext.Name),
+				},
+				FileEmbedded1: ignitionTypes.FileEmbedded1{
+					Mode: toPtr(0644),
+					Contents: ignitionTypes.Resource{
+						Source: toPtr(FormatExtensionTransferConfigURL(ext.BakeryUrl, ext.Name)),
+					},
+				},
+			})
+		}
 
 		dropins = append(dropins, formatExtensionUpdateDropIn(ext.Name))
 	}

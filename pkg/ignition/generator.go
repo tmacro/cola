@@ -15,8 +15,19 @@ var (
 	ErrDuplicateUser      = errors.New("duplicate user")
 )
 
-func Generate(cfg *config.ApplianceConfig) ([]byte, error) {
+type GeneratorOpt func(*generator)
+
+func WithBundledExtensions() GeneratorOpt {
+	return func(o *generator) {
+		o.BundledExtensions = true
+	}
+}
+
+func Generate(cfg *config.ApplianceConfig, opts ...GeneratorOpt) ([]byte, error) {
 	gen := new(generator)
+	for _, opt := range opts {
+		opt(gen)
+	}
 
 	ignCfg, err := gen.Ignition(cfg)
 	if err != nil {
@@ -32,11 +43,12 @@ func Generate(cfg *config.ApplianceConfig) ([]byte, error) {
 }
 
 type generator struct {
-	Users       []ignitionTypes.PasswdUser
-	Files       []ignitionTypes.File
-	Links       []ignitionTypes.Link
-	Directories []ignitionTypes.Directory
-	Units       []ignitionTypes.Unit
+	BundledExtensions bool
+	Users             []ignitionTypes.PasswdUser
+	Files             []ignitionTypes.File
+	Links             []ignitionTypes.Link
+	Directories       []ignitionTypes.Directory
+	Units             []ignitionTypes.Unit
 }
 
 func (g *generator) Ignition(cfg *config.ApplianceConfig) (*ignitionTypes.Config, error) {
