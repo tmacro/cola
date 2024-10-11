@@ -2,6 +2,7 @@ package ignition
 
 import (
 	"fmt"
+	"strings"
 
 	ignitionTypes "github.com/coreos/ignition/v2/config/v3_4/types"
 	"github.com/tmacro/cola/internal/templates"
@@ -15,9 +16,12 @@ func generateInterfaces(cfg *config.ApplianceConfig, g *generator) error {
 			return fmt.Errorf("failed to format systemd network contents: %v", err)
 		}
 
+		ifaceName := strings.ReplaceAll(iface.Name, "*", "")
+		filename := fmt.Sprintf("/etc/systemd/network/10-%s.network", ifaceName)
+
 		g.Files = append(g.Files, ignitionTypes.File{
 			Node: ignitionTypes.Node{
-				Path: fmt.Sprintf("/etc/systemd/network/10-%s.network", iface.Name),
+				Path: filename,
 			},
 			FileEmbedded1: ignitionTypes.FileEmbedded1{
 				Mode: toPtr(0644),
