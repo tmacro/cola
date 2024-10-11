@@ -1,5 +1,11 @@
 [Match]
-{{ if .Name }}Name={{ .Name }}{{ end }}
+{{ if .Name -}}
+Name={{ .Name }}
+{{ end -}}
+
+{{- if .MACAddress -}}
+MACAddress={{ .MACAddress }}
+{{ end -}}
 
 [Network]
 {{ if .Gateway -}}
