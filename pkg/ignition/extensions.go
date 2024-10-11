@@ -125,21 +125,24 @@ func toDataUrl(data string) string {
 	}).String()
 }
 
-func formatExtensionName(name, version, arch string) string {
+// FormatExtensionName constructs a formatted name for an extension based on its name, version, and architecture.
+func FormatExtensionName(name, version, arch string) string {
 	if arch != "" {
 		arch = "-" + arch
 	}
 	return fmt.Sprintf("%s-%s%s", name, version, arch)
 }
 
-func formatExtensionURL(bakeryURL, name, version, arch string) string {
+// FormatExtensionURL constructs the URL for an extension based on its details and the bakery URL.
+func FormatExtensionURL(bakeryURL, name, version, arch string) string {
 	if !strings.HasSuffix(bakeryURL, "/") {
 		bakeryURL += "/"
 	}
 	return fmt.Sprintf("%s%s-%s-%s.raw", bakeryURL, name, version, arch)
 }
 
-func formatExtensionTransferConfigUrl(bakery, name string) string {
+// FormatExtensionTransferConfigURL constructs the URL for an extension's transfer configuration based on the bakery URL and extension name.
+func FormatExtensionTransferConfigURL(bakery, name string) string {
 	if !strings.HasSuffix(bakery, "/") {
 		bakery += "/"
 	}
