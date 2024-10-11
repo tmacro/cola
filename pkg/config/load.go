@@ -31,7 +31,25 @@ func getConfigFilesInDir(path string) ([]string, error) {
 	return paths, nil
 }
 
-func ReadConfig(paths []string, strict bool) (*ApplianceConfig, error) {
+func ReadConfig(paths, bases []string, strict bool) (*ApplianceConfig, error) {
+	config, err := readConfig(paths, strict)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(bases) > 0 {
+		baseConfig, err := readConfig(bases, false)
+		if err != nil {
+			return nil, err
+		}
+
+		config = MergeConfigs(baseConfig, config)
+	}
+
+	return config, nil
+}
+
+func readConfig(paths []string, strict bool) (*ApplianceConfig, error) {
 	configFilePaths := make([]string, 0)
 	for _, path := range paths {
 		fi, err := os.Stat(path)

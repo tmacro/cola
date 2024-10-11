@@ -29,14 +29,24 @@ func main() {
 
 	logger := createLogger(CLI.LogLevel, CLI.LogFormat)
 
-	cfg, err := loadConfig()
+	cfg, err := config.ReadConfig(CLI.Config, CLI.Base, true)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to load configuration")
+		logger.Fatal().Err(err).Msg("Failed to read configuration")
+	}
+
+	err = config.ValidateConfig(cfg)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to validate configuration")
 	}
 
 	logger.Trace().Interface("config", cfg).Msg("Configuration loaded")
 
-	ignJson, err := ignition.Generate(cfg)
+	opts := []ignition.GeneratorOpt{}
+	if CLI.BundledExtensions {
+		opts = append(opts, ignition.WithBundledExtensions())
+	}
+
+	ignJson, err := ignition.Generate(cfg, opts...)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to generate Ignition config")
 	}
@@ -84,30 +94,4 @@ func createLogger(level, format string) zerolog.Logger {
 		panic("invalid log format: " + format)
 	}
 	return zerolog.New(writer).Level(lvl).With().Timestamp().Logger()
-}
-
-func loadConfig() (*config.ApplianceConfig, error) {
-	var baseCfg *config.ApplianceConfig
-	var err error
-
-	if len(CLI.Base) > 0 {
-		baseCfg, err = config.ReadConfig(CLI.Base, false)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	cfg, err := config.ReadConfig(CLI.Config, true)
-	if err != nil {
-		return nil, err
-	}
-
-	merged := config.MergeConfigs(baseCfg, cfg)
-
-	err = config.ValidateConfig(merged)
-	if err != nil {
-		return nil, err
-	}
-
-	return merged, nil
 }
