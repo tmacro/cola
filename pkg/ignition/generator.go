@@ -13,6 +13,7 @@ var (
 	ErrDuplicateDirectory = errors.New("duplicate directory")
 	ErrDuplicateUnit      = errors.New("duplicate unit")
 	ErrDuplicateUser      = errors.New("duplicate user")
+	ErrDuplicateSymlink   = errors.New("duplicate symlink")
 )
 
 type GeneratorOpt func(*generator)
@@ -24,7 +25,7 @@ func WithBundledExtensions() GeneratorOpt {
 }
 
 func Generate(cfg *config.ApplianceConfig, opts ...GeneratorOpt) ([]byte, error) {
-	gen := new(generator)
+	gen := newGenerator()
 	for _, opt := range opts {
 		opt(gen)
 	}
@@ -44,11 +45,18 @@ func Generate(cfg *config.ApplianceConfig, opts ...GeneratorOpt) ([]byte, error)
 
 type generator struct {
 	BundledExtensions bool
+	KernelArguments   *ignitionTypes.KernelArguments
 	Users             []ignitionTypes.PasswdUser
 	Files             []ignitionTypes.File
 	Links             []ignitionTypes.Link
 	Directories       []ignitionTypes.Directory
 	Units             []ignitionTypes.Unit
+}
+
+func newGenerator() *generator {
+	return &generator{
+		KernelArguments: &ignitionTypes.KernelArguments{},
+	}
 }
 
 func (g *generator) Ignition(cfg *config.ApplianceConfig) (*ignitionTypes.Config, error) {
@@ -62,10 +70,12 @@ func (g *generator) Ignition(cfg *config.ApplianceConfig) (*ignitionTypes.Config
 		return nil, err
 	}
 
-	ignCfg := defaultConfig
+	ignCfg := defaultConfig()
 
+	ignCfg.KernelArguments = *g.KernelArguments
 	ignCfg.Passwd.Users = g.Users
 	ignCfg.Storage.Files = g.Files
+	ignCfg.Storage.Directories = g.Directories
 	ignCfg.Storage.Links = g.Links
 	ignCfg.Systemd.Units = g.Units
 
@@ -80,6 +90,9 @@ func (g *generator) generate(cfg *config.ApplianceConfig) error {
 		generateInterfaces,
 		generateFiles,
 		generateDirectories,
+		generateSymlinks,
+		generateKernelArguments,
+		generateHostname,
 	}
 
 	for _, gen := range gens {
@@ -98,6 +111,7 @@ func (g *generator) validate() error {
 		validateFiles,
 		validateDirectories,
 		validateUnits,
+		validateSymlinks,
 	}
 
 	for _, validator := range validators {

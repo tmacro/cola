@@ -1,17 +1,25 @@
 [Unit]
-Description=Container {{.Name}}
+Description={{.Name}}
 After=local-fs.target
 After=network-online.target
 
 [Container]
 Image={{.Image}}
-{{if .Args}}
-Exec={{.Args | join " "}}
-{{end}}
+{{ if .Args -}}
+Exec={{ .Args | join " " }}
+{{ end -}}
 Network=host
-{{range .Volumes}}
+{{ range .Volumes -}}
 Volume={{.Source}}:{{.Target}}
-{{end}}
+{{ end -}}
+{{ range .CapAdd -}}
+AddCapability={{.}}
+{{ end -}}
+
+{{ if .Restart }}
+[Service]
+Restart={{.Restart}}
+{{- end }}
 
 [Install]
 WantedBy=multi-user.target default.target

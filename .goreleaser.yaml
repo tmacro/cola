@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+builds:
+  - id: cola-ignition
+    main: ./cmd/cola-ignition
+    binary: cola-ignition
+    goos: [linux]
+    env:
+      - CGO_ENABLED=0
+    gcflags:
+      - -tags osusergo
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+  - id: cola-bundle
+    main: ./cmd/cola-bundle
+    binary: cola-bundle
+    goos: [linux]
+    env:
+      - CGO_ENABLED=0
+    gcflags:
+      - -tags osusergo
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: binary
+    format: binary
+    name_template: >-
+      {{ .Binary }}-
+      {{- .Version }}-
+      {{- if eq .Arch "amd64" }}
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-dev-{{ .ShortCommit }}"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

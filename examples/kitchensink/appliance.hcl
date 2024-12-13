@@ -12,27 +12,27 @@ user "janitor" {
 }
 
 extension "node-exporter" {
+    bakery_url = "https://s3.binha.us/sysexts/images/"
     version = "1.7.0-1"
     arch = "x86-64"
-    bakery_url = "https://s3.binha.us/sysexts/images/"
 }
 
 extension "vmagent" {
+    bakery_url = "https://s3.binha.us/sysexts/images/"
     version = "1.101.0-1"
     arch = "x86-64"
-    bakery_url = "https://s3.binha.us/sysexts/images/"
 }
 
 extension "consul" {
+    bakery_url = "https://s3.binha.us/sysexts/images/"
     version = "1.18.1-3"
     arch = "x86-64"
-    bakery_url = "https://s3.binha.us/sysexts/images/"
 }
 
 extension "coredns" {
+    bakery_url = "https://s3.binha.us/sysexts/images/"
     version = "1.11.3-1"
     arch = "x86-64"
-    bakery_url = "https://s3.binha.us/sysexts/images/"
 }
 
 file "/etc/testme.conf" {

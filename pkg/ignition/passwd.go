@@ -39,8 +39,22 @@ func generateUsers(cfg *config.ApplianceConfig, g *generator) error {
 			Name:              user.Username,
 			Groups:            toGroup(user.Groups),
 			SSHAuthorizedKeys: toSSHAuthorizedKeys(user.SSHAuthorizedKeys),
-			HomeDir:           toPtr(user.HomeDir),
-			Shell:             toPtr(user.Shell),
+		}
+
+		if user.Uid != 0 {
+			ignUser.UID = toPtr(user.Uid)
+		}
+
+		if user.NoCreateHome {
+			ignUser.NoCreateHome = toPtr(true)
+		}
+
+		if user.HomeDir != "" {
+			ignUser.HomeDir = toPtr(user.HomeDir)
+		}
+
+		if user.Shell != "" {
+			ignUser.Shell = toPtr(user.Shell)
 		}
 
 		g.Users = append(g.Users, ignUser)

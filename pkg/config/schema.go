@@ -7,19 +7,23 @@ type ApplianceConfig struct {
 	Containers  []Container `hcl:"container,block"`
 	Files       []File      `hcl:"file,block"`
 	Directories []Directory `hcl:"directory,block"`
+	Symlinks    []Symlink   `hcl:"symlink,block"`
 	Mounts      []Mount     `hcl:"mount,block"`
 	Interfaces  []Interface `hcl:"interface,block"`
 }
 
 type System struct {
-	Hostname string `hcl:"hostname"`
-	Timezone string `hcl:"timezone,optional"`
+	Hostname           string `hcl:"hostname"`
+	Timezone           string `hcl:"timezone,optional"`
+	EnableTTYAutoLogin bool   `hcl:"enable_tty_auto_login,optional"`
 }
 
 type User struct {
 	Username          string   `hcl:"username,label"`
+	Uid               int      `hcl:"uid,optional"`
 	Groups            []string `hcl:"groups,optional"`
 	HomeDir           string   `hcl:"home_dir,optional"`
+	NoCreateHome      bool     `hcl:"no_create_home,optional"`
 	Shell             string   `hcl:"shell,optional"`
 	SSHAuthorizedKeys []string `hcl:"ssh_authorized_keys,optional"`
 }
@@ -36,11 +40,13 @@ type Container struct {
 	Image   string   `hcl:"image"`
 	Args    []string `hcl:"args,optional"`
 	Volumes []Volume `hcl:"volume,block"`
+	Restart string   `hcl:"restart,optional"`
+	CapAdd  []string `hcl:"cap_add,optional"`
 }
 
 type Volume struct {
-	Source string `hcl:"source,label"`
-	Target string `hcl:"target"`
+	Source string `hcl:"source"`
+	Target string `hcl:"target,label"`
 }
 
 type File struct {
@@ -51,6 +57,7 @@ type File struct {
 	Inline     string `hcl:"inline,optional"`
 	SourcePath string `hcl:"source_path,optional"`
 	URL        string `hcl:"url,optional"`
+	Overwrite  bool   `hcl:"overwrite,optional"`
 }
 
 type Directory struct {
@@ -58,6 +65,14 @@ type Directory struct {
 	Owner string `hcl:"owner,optional"`
 	Group string `hcl:"group,optional"`
 	Mode  string `hcl:"mode"`
+}
+
+type Symlink struct {
+	Path      string `hcl:"path,label"`
+	Target    string `hcl:"target"`
+	Owner     string `hcl:"owner,optional"`
+	Group     string `hcl:"group,optional"`
+	Overwrite bool   `hcl:"overwrite,optional"`
 }
 
 type Mount struct {

@@ -1,23 +1,15 @@
-export CGO_ENABLED:=0
 export GO111MODULE:=on
-
-MODULE   = $(shell $(GO) list -m)
-DATE    ?= $(shell date +%FT%T%z)
-VERSION ?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || echo v0)
-SCHEMAS := $(wildcard pkg/types/schemas/*.json)
-# BINARIES := $(addprefix dist/,$(patsubst cmd/%,%,$(wildcard cmd/*)))
 
 BIN      = bin
 DIST     = dist
 GO       = go
-
-BINARIES := dist/cola-ignition
+GORELEASER = $(BIN)/goreleaser
 
 .PHONY: all
 all: fmt tidy build test
 
 .PHONY: build
-build: $(BINARIES)
+build: snapshot
 
 .PHONY: test
 test:
@@ -36,25 +28,7 @@ tidy:
 	@go mod tidy
 
 clean:
-	@rm -f $(BINARIES)
-
-.PHONY: generate
-generate:
-	@go-jsonschema \
-		--struct-name-from-title \
-		--extra-imports \
-		-p github.com/tmacro/sysctr/pkg/types \
-		-o pkg/types/types_gen.go \
-		$(SCHEMAS)
-
-$(DIST):
-	@mkdir -p $@
-
-$(DIST)/%: | $(DIST)
-	$(GO) build \
-		-tags release \
-		-ldflags '-X $(MODULE)/$(patsubst dist/%,cmd/%,$@).Version=$(VERSION) -X $(MODULE)/cmd.BuildDate=$(DATE)' \
-		-o $@ ./$(patsubst dist/%,cmd/%,$@)
+	@rm -rf dist
 
 $(BIN):
 	@mkdir -p $@
@@ -64,10 +38,10 @@ $(BIN)/%: | $(BIN)
 
 $(BIN)/goreleaser: PACKAGE=github.com/goreleaser/goreleaser/v2@latest
 
-GORELEASER = $(BIN)/goreleaser
-
+.PHONY: release
 release: $(GORELEASER)
 	$(GORELEASER) release --clean
 
+.PHONY: snapshot
 snapshot: $(GORELEASER)
 	$(GORELEASER) release --snapshot --clean

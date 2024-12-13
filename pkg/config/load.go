@@ -139,6 +139,7 @@ func MergeConfigs(base, override *ApplianceConfig) *ApplianceConfig {
 	base.Containers = append(base.Containers, override.Containers...)
 	base.Files = append(base.Files, override.Files...)
 	base.Directories = append(base.Directories, override.Directories...)
+	base.Symlinks = append(base.Symlinks, override.Symlinks...)
 	base.Mounts = append(base.Mounts, override.Mounts...)
 	base.Interfaces = append(base.Interfaces, override.Interfaces...)
 

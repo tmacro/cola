@@ -7,7 +7,7 @@ import (
 	"github.com/tmacro/cola/pkg/config"
 )
 
-func tplJoin(sep string, s ...string) string {
+func tplJoin(sep string, s []string) string {
 	return strings.Join(s, sep)
 }
 
@@ -34,10 +34,6 @@ var systemdNetworkTpl = template.Must(
 	template.New("network").
 		Parse(mustGetEmbeddedFile("systemd.network.tpl")))
 
-// var systemdNetDevTpl = template.Must(
-// 	template.New("netdev").
-// 		Parse(mustGetEmbeddedFile("systemd.netdev.tpl")))
-
 var systemdVlanNetworkTpl = template.Must(
 	template.New("vlanNetwork").
 		Parse(mustGetEmbeddedFile("systemd.vlan.network.tpl")))
@@ -45,6 +41,10 @@ var systemdVlanNetworkTpl = template.Must(
 var systemdVlanNetDevTpl = template.Must(
 	template.New("vlanNetDev").
 		Parse(mustGetEmbeddedFile("systemd.vlan.netdev.tpl")))
+
+var systemdTmpfileConfigTpl = template.Must(
+	template.New("tmpfileConfig").
+		Parse(mustGetEmbeddedFile("systemd.tmpfile.tpl")))
 
 func SystemdContainer(container config.Container) (string, error) {
 	return renderTemplate(systemdContainerTpl, container)
@@ -105,4 +105,14 @@ func SystemdVlanNetDev(vlan config.VLAN) (string, error) {
 	}
 
 	return renderTemplate(systemdVlanNetDevTpl, cfg)
+}
+
+type Tmpfile struct {
+	Mode   string
+	Target string
+	Source string
+}
+
+func SystemdTmpfileConfig(files ...Tmpfile) (string, error) {
+	return renderTemplate(systemdTmpfileConfigTpl, files)
 }

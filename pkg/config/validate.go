@@ -63,6 +63,10 @@ func validateContainers(config *ApplianceConfig) error {
 		if container.Image == "" {
 			return fmt.Errorf("container[%d].image is required", i)
 		}
+
+		if container.Restart != "" && container.Restart != "always" && container.Restart != "no" {
+			return fmt.Errorf("container[%d].restart must be 'always' or 'no'", i)
+		}
 	}
 
 	return nil
@@ -132,9 +136,9 @@ func validateInterfaces(config *ApplianceConfig) error {
 			return fmt.Errorf("interface[%d].gateway is required", i)
 		}
 
-		if iface.Address != "" && iface.DNS == "" {
-			return fmt.Errorf("interface[%d].dns is required", i)
-		}
+		// if iface.Address != "" && iface.DNS == "" {
+		// 	return fmt.Errorf("interface[%d].dns is required", i)
+		// }
 
 		seenNames := make(map[string]struct{})
 		seenIDs := make(map[int]struct{})

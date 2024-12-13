@@ -45,6 +45,10 @@ func generateFiles(cfg *config.ApplianceConfig, g *generator) error {
 			}
 		}
 
+		if file.Overwrite {
+			f.Overwrite = toPtr(file.Overwrite)
+		}
+
 		if file.Inline != "" {
 			f.FileEmbedded1.Contents.Source = toPtr(toDataUrl(file.Inline))
 		} else if file.SourcePath != "" {
@@ -117,6 +121,53 @@ func validateDirectories(g *generator) error {
 			return fmt.Errorf("%w: %s", ErrDuplicateDirectory, dir.Path)
 		}
 		seenPaths[dir.Path] = struct{}{}
+	}
+
+	return nil
+}
+
+func generateSymlinks(cfg *config.ApplianceConfig, g *generator) error {
+	for _, link := range cfg.Symlinks {
+		s := ignitionTypes.Link{
+			Node: ignitionTypes.Node{
+				Path: link.Path,
+			},
+			LinkEmbedded1: ignitionTypes.LinkEmbedded1{
+				Hard:   toPtr(false),
+				Target: toPtr(link.Target),
+			},
+		}
+
+		if link.Owner != "" {
+			s.Node.User = ignitionTypes.NodeUser{
+				Name: toPtr(link.Owner),
+			}
+
+		}
+
+		if link.Group != "" {
+			s.Node.Group = ignitionTypes.NodeGroup{
+				Name: toPtr(link.Group),
+			}
+		}
+
+		if link.Overwrite {
+			s.Overwrite = toPtr(link.Overwrite)
+		}
+
+		g.Links = append(g.Links, s)
+	}
+
+	return nil
+}
+
+func validateSymlinks(g *generator) error {
+	seenPaths := make(map[string]struct{})
+	for _, link := range g.Links {
+		if _, ok := seenPaths[link.Path]; ok {
+			return fmt.Errorf("%w: %s", ErrDuplicateSymlink, link.Path)
+		}
+		seenPaths[link.Path] = struct{}{}
 	}
 
 	return nil

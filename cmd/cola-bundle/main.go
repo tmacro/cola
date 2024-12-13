@@ -10,13 +10,14 @@ import (
 )
 
 var CLI struct {
-	LogLevel  string   `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"debug"`
-	LogFormat string   `enum:"json,text" default:"text" help:"Set the log format. (json, text)"`
-	Config    []string `short:"c" help:"Path to the configuration file." default:"appliance.hcl" type:"path"`
-	Base      []string `short:"b" help:"Use this config as a base to extend from." type:"path"`
-	Image     string   `short:"i" help:"Path to the Flatcar Linux image." type:"existingpath"`
-	Ignition  string   `short:"g" help:"Path to the Ignition config." type:"existingpath"`
-	Output    string   `short:"o" help:"Output file."`
+	LogLevel     string   `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"debug"`
+	LogFormat    string   `enum:"json,text" default:"text" help:"Set the log format. (json, text)"`
+	Config       []string `short:"c" help:"Path to the configuration file." default:"appliance.hcl" type:"path"`
+	Base         []string `short:"b" help:"Use this config as a base to extend from." type:"path"`
+	Image        string   `short:"i" help:"Path to the Flatcar Linux image." type:"existingpath"`
+	Ignition     string   `short:"g" help:"Path to the Ignition config." type:"existingpath"`
+	Output       string   `short:"o" help:"Output file."`
+	ExtensionDir string   `short:"e" help:"Directory containing sysexts." type:"existingdir" optional:""`
 }
 
 func main() {
@@ -47,9 +48,9 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to create temporary directory")
 	}
 
-	// defer os.RemoveAll(workdir)
+	defer os.RemoveAll(workdir)
 
-	err = bundle(cfg, workdir, logger)
+	err = bundle(cfg, workdir, &logger)
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to bundle")
 	}

@@ -1,0 +1,12 @@
+[Unit]
+Description=Create missing podman files
+DefaultDependencies=no
+Wants=sysroot.mount sysroot-usr.mount
+After=sysroot.mount sysroot-usr.mount
+Before=sysinit.target systemd-sysusers.service
+ConditionPathIsReadWrite=/etc
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/cola/podman-tmpfiles-fix.sh
