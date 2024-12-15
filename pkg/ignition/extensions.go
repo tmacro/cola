@@ -17,7 +17,7 @@ var defaultExtensionFiles = []ignitionTypes.File{
 			Path: "/opt/bin/sysext-update",
 		},
 		FileEmbedded1: ignitionTypes.FileEmbedded1{
-			Mode: toPtr(0644),
+			Mode: toPtr(0755),
 			Contents: ignitionTypes.Resource{
 				Source: toPtr(toDataUrl(files.MustGetEmbeddedFile("sysext-update.sh"))),
 			},
