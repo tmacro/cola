@@ -10,6 +10,7 @@ type ApplianceConfig struct {
 	Symlinks    []Symlink   `hcl:"symlink,block"`
 	Mounts      []Mount     `hcl:"mount,block"`
 	Interfaces  []Interface `hcl:"interface,block"`
+	Services    []Service   `hcl:"service,block"`
 }
 
 type System struct {
@@ -100,4 +101,18 @@ type VLAN struct {
 	Gateway string `hcl:"gateway,optional"`
 	DNS     string `hcl:"dns,optional"`
 	DHCP    bool   `hcl:"dhcp,optional"`
+}
+
+type Service struct {
+	Name       string   `hcl:"name,label"`
+	Inline     string   `hcl:"inline,optional"`
+	SourcePath string   `hcl:"source_path,optional"`
+	Enabled    bool     `hcl:"enabled,optional"`
+	DropIns    []DropIn `hcl:"drop_in,block"`
+}
+
+type DropIn struct {
+	Name       string `hcl:"name,label"`
+	Inline     string `hcl:"inline,optional"`
+	SourcePath string `hcl:"source_path,optional"`
 }

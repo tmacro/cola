@@ -12,6 +12,7 @@ var (
 	ErrDuplicateFile      = errors.New("duplicate file")
 	ErrDuplicateDirectory = errors.New("duplicate directory")
 	ErrDuplicateUnit      = errors.New("duplicate unit")
+	ErrDuplicateDropin    = errors.New("duplicate dropin")
 	ErrDuplicateUser      = errors.New("duplicate user")
 	ErrDuplicateSymlink   = errors.New("duplicate symlink")
 )
@@ -93,6 +94,7 @@ func (g *generator) generate(cfg *config.ApplianceConfig) error {
 		generateSymlinks,
 		generateKernelArguments,
 		generateHostname,
+		generateServices,
 	}
 
 	for _, gen := range gens {

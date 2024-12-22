@@ -24,6 +24,7 @@ var validators = []func(*ApplianceConfig) error{
 	validateDirectories,
 	// validateMounts,
 	validateInterfaces,
+	validateServices,
 }
 
 func validateUsers(config *ApplianceConfig) error {
@@ -177,6 +178,30 @@ func validateVLAN(vlan *VLAN) error {
 
 	if vlan.Address != "" && vlan.Gateway == "" {
 		return fmt.Errorf("vlan.gateway is required")
+	}
+
+	return nil
+}
+
+func validateServices(config *ApplianceConfig) error {
+	for i, service := range config.Services {
+		if service.Name == "" {
+			return fmt.Errorf("service[%d].name is required", i)
+		}
+
+		if service.Inline == "" && service.SourcePath == "" && len(service.DropIns) == 0 {
+			return fmt.Errorf("service[%d] must have either inline, source_path, or dropins", i)
+		}
+
+		for j, dropin := range service.DropIns {
+			if dropin.Name == "" {
+				return fmt.Errorf("service[%d].dropin[%d].name is required", i, j)
+			}
+
+			if dropin.Inline == "" && dropin.SourcePath == "" {
+				return fmt.Errorf("service[%d].dropin[%d] must have either inline or source_path", i, j)
+			}
+		}
 	}
 
 	return nil

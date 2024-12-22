@@ -86,13 +86,38 @@ func readConfigFile(path string, strict bool) (*ApplianceConfig, error) {
 	if len(config.Files) > 0 {
 		files := make([]File, len(config.Files))
 		for i, file := range config.Files {
+			f := file
 			if file.SourcePath != "" && !filepath.IsAbs(file.SourcePath) {
-				file.SourcePath = filepath.Join(filepath.Dir(path), file.SourcePath)
+				f.SourcePath = filepath.Join(filepath.Dir(path), file.SourcePath)
 			}
-			files[i] = file
+			files[i] = f
 		}
 
 		config.Files = files
+	}
+
+	if len(config.Services) > 0 {
+		services := make([]Service, len(config.Services))
+		for i, service := range config.Services {
+			svc := service
+			if service.SourcePath != "" && !filepath.IsAbs(service.SourcePath) {
+				svc.SourcePath = filepath.Join(filepath.Dir(path), service.SourcePath)
+			}
+
+			if len(service.DropIns) > 0 {
+				dropins := make([]DropIn, len(service.DropIns))
+				for j, dropin := range service.DropIns {
+					drp := dropin
+					if dropin.SourcePath != "" && !filepath.IsAbs(dropin.SourcePath) {
+						drp.SourcePath = filepath.Join(filepath.Dir(path), dropin.SourcePath)
+					}
+					dropins[j] = drp
+				}
+				svc.DropIns = dropins
+			}
+			services[i] = svc
+		}
+		config.Services = services
 	}
 
 	return &config, nil
@@ -142,6 +167,7 @@ func MergeConfigs(base, override *ApplianceConfig) *ApplianceConfig {
 	base.Symlinks = append(base.Symlinks, override.Symlinks...)
 	base.Mounts = append(base.Mounts, override.Mounts...)
 	base.Interfaces = append(base.Interfaces, override.Interfaces...)
+	base.Services = append(base.Services, override.Services...)
 
 	return base
 }
