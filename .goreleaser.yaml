@@ -4,23 +4,9 @@
 version: 2
 
 builds:
-  - id: cola-ignition
-    main: ./cmd/cola-ignition
-    binary: cola-ignition
-    goos: [linux]
-    env:
-      - CGO_ENABLED=0
-    gcflags:
-      - -tags osusergo
-      - -trimpath
-    ldflags:
-      - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.Commit}}
-      - -X main.date={{.Date}}
-  - id: cola-bundle
-    main: ./cmd/cola-bundle
-    binary: cola-bundle
+  - id: cola
+    main: ./cmd/cola
+    binary: cola
     goos: [linux]
     env:
       - CGO_ENABLED=0

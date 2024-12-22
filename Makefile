@@ -1,4 +1,5 @@
 export GO111MODULE:=on
+export CGO_ENABLED:=0
 
 BIN      = bin
 DIST     = dist
@@ -9,7 +10,8 @@ GORELEASER = $(BIN)/goreleaser
 all: fmt tidy build test
 
 .PHONY: build
-build: snapshot
+build:
+	@go build -o cola ./cmd/cola
 
 .PHONY: test
 test:
