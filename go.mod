@@ -1,11 +1,10 @@
 module github.com/tmacro/cola
 
-go 1.22.5
+go 1.23.3
 
 require (
 	github.com/alecthomas/kong v0.9.0
 	github.com/coreos/ignition/v2 v2.19.0
-	github.com/davecgh/go-spew v1.1.1
 	github.com/hashicorp/hcl/v2 v2.21.0
 	github.com/moby/sys/mount v0.3.4
 	github.com/rs/zerolog v1.33.0
