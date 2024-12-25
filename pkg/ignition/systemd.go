@@ -33,7 +33,6 @@ func validateUnits(g *generator) error {
 }
 
 func generateServices(cfg *config.ApplianceConfig, g *generator) error {
-	fmt.Printf("%+v\n", cfg.Services)
 	for _, service := range cfg.Services {
 		unit := ignitionTypes.Unit{
 			Name: service.Name,

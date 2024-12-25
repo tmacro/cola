@@ -1,0 +1,7 @@
+= COLA Documentation
+:source-highlighter: rouge
+:toc: left
+
+:leveloffset: +1
+
+include::reference/index.adoc[]

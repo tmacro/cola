@@ -17,14 +17,13 @@ import (
 )
 
 type BundleCmd struct {
-	Config            []string `short:"c" help:"Path to the configuration file or directory." type:"path"`
-	Base              []string `help:"Use this config as a base to extend from." type:"path"`
-	Image             string   `short:"f" help:"Path to the Flatcar Linux image." type:"existingpath" required:""`
-	GenIgnition       bool     `short:"g" help:"Generate the Ignition config. (cannot be used with --ignition)"`
-	Ignition          string   `short:"i" help:"Path to the Ignition config." type:"existingpath" optional:""`
-	Output            string   `short:"o" help:"Output file."`
-	BundledExtensions bool     `short:"b" help:"Bundle extensions into the image."`
-	ExtensionDir      string   `short:"e" help:"Directory containing sysexts." type:"existingdir" optional:""`
+	Config       []string `short:"c" help:"Path to the configuration file or directory." type:"path"`
+	Base         []string `short:"b" help:"Use this config as a base to extend from." type:"path"`
+	Image        string   `short:"f" help:"Path to the Flatcar Linux image." type:"existingpath" required:""`
+	GenIgnition  bool     `short:"g" help:"Generate the Ignition config. (cannot be used with --ignition)"`
+	Ignition     string   `short:"i" help:"Path to the Ignition config." type:"existingpath" optional:""`
+	Output       string   `short:"o" help:"Output file."`
+	ExtensionDir string   `short:"e" help:"Directory containing sysexts." type:"existingdir" optional:""`
 }
 
 func (cmd *BundleCmd) Run(logger *zerolog.Logger) error {
@@ -68,7 +67,37 @@ func (cmd *BundleCmd) Run(logger *zerolog.Logger) error {
 		return err
 	}
 
-	err = installIgnition(workdir, cmd.Ignition, logger)
+	ignPath := filepath.Join(workdir, "ign.json")
+	if cmd.GenIgnition {
+		ignJson, err := ignition.Generate(cfg, ignition.WithBundledExtensions(), ignition.WithExtensionDir(workdir))
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to generate Ignition config")
+		}
+
+		f, err := os.Create(ignPath)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to create Ignition config")
+		}
+
+		_, err = f.Write(ignJson)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to write Ignition config")
+		}
+
+		err = f.Close()
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to close Ignition config")
+		}
+	} else {
+		err = copyFile(cmd.Ignition, ignPath)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("failed to copy Ignition config")
+			cleanupMounts()
+			return err
+		}
+	}
+
+	err = installIgnition(workdir, ignPath, logger)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to install Ignition config")
 		cleanupMounts()
@@ -273,7 +302,7 @@ func installSysExts(cfg *config.ApplianceConfig, workdir string, logger *zerolog
 
 		transferCfg := filepath.Join(workdir, ext.Name+".conf")
 		transferCfgInstallPath := filepath.Join("/etc", "sysupdate."+ext.Name+".d")
-		transferCfgImagePath := filepath.Join("/usr/lib/cola/etc", "sysupdate."+ext.Name+".d")
+		transferCfgImagePath := filepath.Join("/opt/cola/etc", "sysupdate."+ext.Name+".d")
 
 		err = os.MkdirAll(transferCfgInstallPath, 0o755)
 		if err != nil {

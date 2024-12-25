@@ -47,3 +47,8 @@ release: $(GORELEASER)
 .PHONY: snapshot
 snapshot: $(GORELEASER)
 	$(GORELEASER) release --snapshot --clean
+
+.PHONY: docs
+docs:
+	@mkdir -p dist/docs
+	@docker run -v $(PWD):/documents/ asciidoctor/docker-asciidoctor:latest asciidoctor -o dist/docs/index.html -r asciidoctor-diagram docs/index.adoc

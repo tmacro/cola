@@ -13,7 +13,8 @@ func enablePodmanSysext(g *generator) {
 	g.Files = append(g.Files,
 		ignitionTypes.File{
 			Node: ignitionTypes.Node{
-				Path: "/etc/flatcar/enabled-sysext.conf",
+				Path:      "/etc/flatcar/enabled-sysext.conf",
+				Overwrite: toPtr(true),
 			},
 			FileEmbedded1: ignitionTypes.FileEmbedded1{
 				Mode: toPtr(0644),
@@ -24,7 +25,8 @@ func enablePodmanSysext(g *generator) {
 		},
 		ignitionTypes.File{
 			Node: ignitionTypes.Node{
-				Path: "/opt/cola/podman-tmpfiles-fix.sh",
+				Path:      "/opt/cola/podman-tmpfiles-fix.sh",
+				Overwrite: toPtr(true),
 			},
 			FileEmbedded1: ignitionTypes.FileEmbedded1{
 				Mode: toPtr(0755),
@@ -35,7 +37,8 @@ func enablePodmanSysext(g *generator) {
 		},
 		ignitionTypes.File{
 			Node: ignitionTypes.Node{
-				Path: "/etc/systemd/system/podman-tmpfiles-fix.service",
+				Path:      "/etc/systemd/system/podman-tmpfiles-fix.service",
+				Overwrite: toPtr(true),
 			},
 			FileEmbedded1: ignitionTypes.FileEmbedded1{
 				Mode: toPtr(0755),
@@ -69,7 +72,6 @@ func generateContainers(cfg *config.ApplianceConfig, g *generator) error {
 		if err != nil {
 			return fmt.Errorf("failed to format container unit contents: %v", err)
 		}
-		fmt.Println(contents)
 		g.Files = append(g.Files, ignitionTypes.File{
 			Node: ignitionTypes.Node{
 				Path: fmt.Sprintf("/etc/containers/systemd/%s.container", container.Name),

@@ -1,0 +1,333 @@
+= Configuration Syntax
+:toc: left
+
+== Supported blocks
+
+The following blocks are supported in the machine configuration file:
+
+- <<_system,system>>
+- <<_user,user>>
+- <<_extension,extension>>
+- <<_container,container>>
+- <<_file,file>>
+- <<_directory,directory>>
+- <<_symlink,symlink>>
+- <<_mount,mount>>
+- <<_interface,interface>>
+- <<_service,service>>
+
+
+== System
+
+The `system` block is used to configure system-wide settings. It can contain the following keys:
+
+- `hostname` (string): The hostname of the machine.
+- `timezone` (string, optional): The timezone of the machine (e.g., `"UTC"`, `"America/New_York"`).
+- `enable_tty_auto_login` (bool, optional): Enable automatic login on the console.
+
+Example:
+
+[source,hcl]
+----
+system {
+  hostname = "cola"
+  timezone = "UTC"
+  enable_tty_auto_login = true
+}
+----
+
+== User
+
+The `user` block is used to configure user accounts. It contains the following keys:
+
+- `uid` (int, optional): The user ID.
+- `groups` (array of strings, optional): The groups the user belongs to.
+- `shell` (string, optional): The user's shell.
+- `home_dir` (string, optional): The user's home directory.
+- `no_create_home` (bool, optional): Do not create the user's home directory.
+- `ssh_authorized_keys` (array of strings, optional): The user's SSH authorized keys.
+
+You must specify the `username` as the block label.
+
+Example:
+
+[source,hcl]
+----
+user "alice" {
+  uid    = 1000
+  groups = ["wheel"]
+  shell  = "/bin/bash"
+  home_dir = "/home/alice"
+  ssh_authorized_keys = [
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDZlJ7...",
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDZlJ7..."
+  ]
+}
+----
+
+== Extension
+
+The `extension` block is used to configure Systemd sysext extensions. It contains the following keys:
+
+- `version` (string): The version of the extension.
+- `arch` (string, optional): The architecture of the extension (e.g., `"x86_64"`, `"arm64"`).
+- `bakery_url` (string): The URL of the extension's bakery.
+
+You must specify the `name` as the block label.
+
+Example:
+
+[source,hcl]
+----
+extension "consul" {
+  version    = "1.9.5"
+  arch       = "x86_64"
+  bakery_url = "https://bakery.example.com/"
+}
+----
+
+== Container
+
+The `container` block is used to configure containers. It contains the following keys:
+
+- `image` (string): The container image.
+- `args` (array of strings, optional): The arguments to pass to the container.
+- `restart` (string, optional): The container restart policy (e.g., `"always"`, `"on-failure"`).
+- `cap_add` (array of strings, optional): Additional Linux capabilities to add to the container.
+- `volume` (sub-block, optional): One or more `volume` sub-blocks that configure container volumes.
+
+You must specify the `name` as the block label.
+
+Example:
+
+[source,hcl]
+----
+container "nginx" {
+  image   = "nginx:latest"
+  args    = ["-p", "80:80"]
+  restart = "always"
+
+  volume "/var/www" {
+    source = "/var/www"
+  }
+}
+----
+
+=== Volume
+
+The `volume` sub-block is used to configure container volumes. It contains the following keys:
+
+- `source` (string): The path on the host that is mounted into the container.
+
+You must specify the target mount path as the block label.
+
+Example:
+
+[source,hcl]
+----
+container "myapp" {
+  image = "myapp:1.0"
+
+  volume "/opt/myapp/config" {
+    source = "/etc/myapp"
+  }
+}
+----
+
+== File
+
+The `file` block is used to manage the creation or modification of files. It contains the following keys:
+
+- `owner` (string, optional): The file owner.
+- `group` (string, optional): The file group.
+- `mode` (string): The file permissions (e.g., `"0644"`).
+- `inline` (string, optional): File contents provided inline.
+- `source_path` (string, optional): Path to a local file whose contents should be used.
+- `url` (string, optional): Remote URL whose contents should be fetched and used.
+- `overwrite` (bool, optional): Overwrite the file if it already exists (default is `false`).
+
+You must specify the `path` as the block label.
+
+Example:
+
+[source,hcl]
+----
+file "/etc/myconfig.conf" {
+  owner = "root"
+  group = "root"
+  mode  = "0644"
+
+  inline = <<-EOF
+    # This is my config
+    setting1 = true
+    setting2 = "some-value"
+  EOF
+
+  # Alternatively, you can use a local file or a URL.
+  # Relative paths are resolved relative to the configuration file.
+  # source_path = "/path/to/local/file"
+  # url = "https://example.com/myconfig.conf"
+  # overwrite = true
+}
+----
+
+== Directory
+
+The `directory` block is used to manage directories on the system. It contains the following keys:
+
+- `owner` (string, optional): The directory owner.
+- `group` (string, optional): The directory group.
+- `mode` (string): The directory permissions (e.g., `"0755"`).
+
+You must specify the `path` as the block label.
+
+Example:
+
+[source,hcl]
+----
+directory "/var/log/myapp" {
+  owner = "myapp"
+  group = "myapp"
+  mode  = "0750"
+}
+----
+
+== Symlink
+
+The `symlink` block is used to create symbolic links. It contains the following keys:
+
+- `target` (string): The file or directory the symlink should point to.
+- `owner` (string, optional): The symlink owner.
+- `group` (string, optional): The symlink group.
+- `overwrite` (bool, optional): Overwrite the symlink if it already exists (default is `false`).
+
+You must specify the link `path` as the block label.
+
+Example:
+
+[source,hcl]
+----
+symlink "/usr/bin/myapp" {
+  target    = "/opt/myapp/myapp"
+  owner     = "root"
+  group     = "root"
+  overwrite = true
+}
+----
+
+== Mount
+
+The `mount` block is used to configure file system mounts. It contains the following keys:
+
+- `type` (string): The filesystem type (e.g., `"ext4"`, `"nfs"`, `"tmpfs"`).
+- `what` (string): The source device or remote path.
+- `where` (string): Where to mount in the filesystem (mount target).
+- `options` (string, optional): Additional mount options (comma-separated).
+
+You must specify the `mount_point` as the block label.
+
+Example:
+
+[source,hcl]
+----
+mount "/data" {
+  type    = "ext4"
+  what    = "/dev/sdb1"
+  where   = "/data"
+  options = "defaults"
+}
+----
+
+== Interface
+
+The `interface` block is used to configure network interfaces. It contains the following keys:
+
+- `name` (string, optional): The interface name (e.g., `"eth0"`).
+- `mac_address` (string, optional): The desired MAC address for the interface.
+- `gateway` (string, optional): The default gateway.
+- `address` (string, optional): The IPv4 or IPv6 address with CIDR (e.g., `"192.168.1.10/24"`).
+- `dns` (string, optional): DNS nameserver address (e.g., `"8.8.8.8"`).
+- `dhcp` (bool, optional): Whether to enable DHCP on this interface.
+- `vlan` (sub-block, optional): One or more VLAN sub-blocks for VLAN configuration.
+
+Example:
+
+[source,hcl]
+----
+interface {
+  name        = "eth0"
+  mac_address = "00:1A:2B:3C:4D:5E"
+  address     = "192.168.1.10/24"
+  gateway     = "192.168.1.1"
+  dns         = "8.8.8.8"
+  dhcp        = false
+
+  vlan "vlan10" {
+    id      = 10
+    address = "192.168.10.10/24"
+    gateway = "192.168.10.1"
+    dns     = "8.8.8.8"
+    dhcp    = false
+  }
+}
+----
+
+=== Vlan
+
+The `vlan` sub-block is used to define VLANs on top of an interface. It contains the following keys:
+
+- `id` (int): VLAN ID number.
+- `address` (string, optional): The VLAN's address with CIDR notation.
+- `gateway` (string, optional): The VLAN's default gateway.
+- `dns` (string, optional): The VLAN's DNS server.
+- `dhcp` (bool, optional): Whether to enable DHCP on this VLAN.
+
+You must specify the VLAN `name` as the block label.
+
+== Service
+
+The `service` block is used to configure systemd services. It contains the following keys:
+
+- `inline` (string, optional): The full systemd unit file content provided inline.
+- `source_path` (string, optional): A path to a local file containing the systemd unit file.
+- `enabled` (bool, optional): Whether to enable (and start) the service.
+
+You must specify the service `name` as the block label.
+
+Example:
+
+[source,hcl]
+----
+service "myapp" {
+  inline = <<-EOF
+    [Unit]
+    Description=My Application
+
+    [Service]
+    ExecStart=/usr/bin/myapp
+
+    [Install]
+    WantedBy=multi-user.target
+  EOF
+
+  enabled = true
+
+  drop_in "logging.conf" {
+    inline = <<-EOF
+        [Service]
+        Environment="LOG_LEVEL=debug"
+    EOF
+  }
+}
+----
+
+=== Drop_in
+
+The `drop_in` sub-block is used to define systemd drop-in files for a service. It contains the following keys:
+
+- `inline` (string, optional): The contents of the drop-in file provided inline.
+- `source_path` (string, optional): A path to a local file containing the drop-in configuration.
+
+You must specify the drop-in `name` as the block label.
+
+Use the examples as a guide to configure your own machine settings. All blocks are optional unless otherwise specified, but you must supply at least one of the recognized blocks (`system`, `user`, `extension`, `container`, `file`, `directory`, `symlink`, `mount`, `interface`, `service`) to have a valid configuration.

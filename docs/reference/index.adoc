@@ -1,0 +1,5 @@
+= Reference
+
+:leveloffset: +1
+
+include::config.adoc[]

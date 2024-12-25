@@ -7,10 +7,10 @@ import (
 )
 
 func SetupDevice(path string) (string, error) {
-	fmt.Println("losetup", "--partscan", "--find", "--show", path)
+	// fmt.Println("losetup", "--partscan", "--find", "--show", path)
 	loopdev, err := exec.Command("losetup", "--partscan", "--find", "--show", path).Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to mount loop device: %w", err)
+		return "", fmt.Errorf("failed to mount loop device %s: %w", path, err)
 	}
 
 	return strings.TrimSpace(string(loopdev)), nil

@@ -25,6 +25,12 @@ func WithBundledExtensions() GeneratorOpt {
 	}
 }
 
+func WithExtensionDir(dir string) GeneratorOpt {
+	return func(o *generator) {
+		o.ExtensionDir = dir
+	}
+}
+
 func Generate(cfg *config.ApplianceConfig, opts ...GeneratorOpt) ([]byte, error) {
 	gen := newGenerator()
 	for _, opt := range opts {
@@ -46,6 +52,7 @@ func Generate(cfg *config.ApplianceConfig, opts ...GeneratorOpt) ([]byte, error)
 
 type generator struct {
 	BundledExtensions bool
+	ExtensionDir      string
 	KernelArguments   *ignitionTypes.KernelArguments
 	Users             []ignitionTypes.PasswdUser
 	Files             []ignitionTypes.File

@@ -2,7 +2,10 @@ package ignition
 
 import (
 	"fmt"
+	"io"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
 	ignitionTypes "github.com/coreos/ignition/v2/config/v3_4/types"
@@ -14,7 +17,8 @@ import (
 var defaultExtensionFiles = []ignitionTypes.File{
 	{
 		Node: ignitionTypes.Node{
-			Path: "/opt/bin/sysext-update",
+			Path:      "/opt/bin/sysext-update",
+			Overwrite: toPtr(true),
 		},
 		FileEmbedded1: ignitionTypes.FileEmbedded1{
 			Mode: toPtr(0755),
@@ -25,7 +29,8 @@ var defaultExtensionFiles = []ignitionTypes.File{
 	},
 	{
 		Node: ignitionTypes.Node{
-			Path: "/etc/sysupdate.d/noop.conf",
+			Path:      "/etc/sysupdate.d/noop.conf",
+			Overwrite: toPtr(true),
 		},
 		FileEmbedded1: ignitionTypes.FileEmbedded1{
 			Mode: toPtr(0644),
@@ -74,7 +79,8 @@ func generateExtensions(cfg *config.ApplianceConfig, g *generator) error {
 		if !g.BundledExtensions {
 			g.Links = append(g.Links, ignitionTypes.Link{
 				Node: ignitionTypes.Node{
-					Path: "/etc/extensions/" + ext.Name + ".raw",
+					Path:      "/etc/extensions/" + ext.Name + ".raw",
+					Overwrite: toPtr(true),
 				},
 				LinkEmbedded1: ignitionTypes.LinkEmbedded1{
 					Hard:   toPtr(false),
@@ -84,7 +90,8 @@ func generateExtensions(cfg *config.ApplianceConfig, g *generator) error {
 
 			g.Files = append(g.Files, ignitionTypes.File{
 				Node: ignitionTypes.Node{
-					Path: extPath,
+					Path:      extPath,
+					Overwrite: toPtr(true),
 				},
 				FileEmbedded1: ignitionTypes.FileEmbedded1{
 					Mode: toPtr(0644),
@@ -96,12 +103,36 @@ func generateExtensions(cfg *config.ApplianceConfig, g *generator) error {
 
 			g.Files = append(g.Files, ignitionTypes.File{
 				Node: ignitionTypes.Node{
-					Path: fmt.Sprintf("/etc/sysupdate.%s.d/%s.conf", ext.Name, ext.Name),
+					Path:      fmt.Sprintf("/etc/sysupdate.%s.d/%s.conf", ext.Name, ext.Name),
+					Overwrite: toPtr(true),
 				},
 				FileEmbedded1: ignitionTypes.FileEmbedded1{
 					Mode: toPtr(0644),
 					Contents: ignitionTypes.Resource{
 						Source: toPtr(FormatExtensionTransferConfigURL(ext.BakeryUrl, ext.Name)),
+					},
+				},
+			})
+		} else {
+			f, err := os.Open(filepath.Join(g.ExtensionDir, ext.Name+".conf"))
+			if err != nil {
+				return fmt.Errorf("failed to open extension transfer config: %v", err)
+			}
+
+			transferCfg, err := io.ReadAll(f)
+			if err != nil {
+				return fmt.Errorf("failed to read extension transfer config: %v", err)
+			}
+
+			g.Files = append(g.Files, ignitionTypes.File{
+				Node: ignitionTypes.Node{
+					Path:      fmt.Sprintf("/etc/sysupdate.%s.d/%s.conf", ext.Name, ext.Name),
+					Overwrite: toPtr(true),
+				},
+				FileEmbedded1: ignitionTypes.FileEmbedded1{
+					Mode: toPtr(0644),
+					Contents: ignitionTypes.Resource{
+						Source: toPtr(toDataUrl(string(transferCfg))),
 					},
 				},
 			})

@@ -13,6 +13,7 @@ type GenerateCmd struct {
 	Config            []string `short:"c" help:"Path to the configuration file or directory." type:"path"`
 	Output            string   `short:"o" help:"Output file."`
 	BundledExtensions bool     `short:"b" help:"Assume extensions are will be bundled into the image."`
+	ExtensionDir      string   `short:"e" help:"Directory containing sysexts." type:"existingdir" optional:""`
 }
 
 func (cmd *GenerateCmd) Run(logger *zerolog.Logger) error {
@@ -35,6 +36,10 @@ func (cmd *GenerateCmd) Run(logger *zerolog.Logger) error {
 	opts := []ignition.GeneratorOpt{}
 	if cmd.BundledExtensions {
 		opts = append(opts, ignition.WithBundledExtensions())
+	}
+
+	if cmd.ExtensionDir != "" {
+		opts = append(opts, ignition.WithExtensionDir(cmd.ExtensionDir))
 	}
 
 	ignJson, err := ignition.Generate(cfg, opts...)

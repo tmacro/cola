@@ -189,8 +189,8 @@ func validateServices(config *ApplianceConfig) error {
 			return fmt.Errorf("service[%d].name is required", i)
 		}
 
-		if service.Inline == "" && service.SourcePath == "" && len(service.DropIns) == 0 {
-			return fmt.Errorf("service[%d] must have either inline, source_path, or dropins", i)
+		if service.Inline == "" && service.SourcePath == "" && len(service.DropIns) == 0 && !service.Enabled {
+			return fmt.Errorf("service[%d] must have either inline, source_path, dropins, or be enabled", i)
 		}
 
 		for j, dropin := range service.DropIns {
