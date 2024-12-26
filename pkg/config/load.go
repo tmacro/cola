@@ -159,6 +159,34 @@ func MergeConfigs(base, override *ApplianceConfig) *ApplianceConfig {
 		}
 	}
 
+	if base.Etcd == nil {
+		base.Etcd = override.Etcd
+	} else {
+		if override.Etcd != nil && override.Etcd.Server {
+			base.Etcd.Server = true
+		}
+
+		if override.Etcd != nil && override.Etcd.Gateway {
+			base.Etcd.Gateway = true
+		}
+
+		if override.Etcd != nil && override.Etcd.Name != "" {
+			base.Etcd.Name = override.Etcd.Name
+		}
+
+		if override.Etcd != nil && override.Etcd.ListenAddress != "" {
+			base.Etcd.ListenAddress = override.Etcd.ListenAddress
+		}
+
+		if override.Etcd != nil && override.Etcd.InitialToken != "" {
+			base.Etcd.InitialToken = override.Etcd.InitialToken
+		}
+
+		if override.Etcd != nil && len(override.Etcd.Peers) > 0 {
+			base.Etcd.Peers = append(base.Etcd.Peers, override.Etcd.Peers...)
+		}
+	}
+
 	base.Users = append(base.Users, override.Users...)
 	base.Extensions = append(base.Extensions, override.Extensions...)
 	base.Containers = append(base.Containers, override.Containers...)

@@ -2,6 +2,7 @@ package config
 
 type ApplianceConfig struct {
 	System      *System     `hcl:"system,block"`
+	Etcd        *Etcd       `hcl:"etcd,block"`
 	Users       []User      `hcl:"user,block"`
 	Extensions  []Extension `hcl:"extension,block"`
 	Containers  []Container `hcl:"container,block"`
@@ -14,9 +15,14 @@ type ApplianceConfig struct {
 }
 
 type System struct {
-	Hostname           string `hcl:"hostname"`
-	Timezone           string `hcl:"timezone,optional"`
-	EnableTTYAutoLogin bool   `hcl:"enable_tty_auto_login,optional"`
+	Hostname           string   `hcl:"hostname"`
+	Timezone           string   `hcl:"timezone,optional"`
+	EnableTTYAutoLogin bool     `hcl:"enable_tty_auto_login,optional"`
+	Updates            *Updates `hcl:"updates,block"`
+}
+
+type Updates struct {
+	RebootStrategy string `hcl:"reboot_strategy"`
 }
 
 type User struct {
@@ -115,4 +121,19 @@ type DropIn struct {
 	Name       string `hcl:"name,label"`
 	Inline     string `hcl:"inline,optional"`
 	SourcePath string `hcl:"source_path,optional"`
+}
+
+type Etcd struct {
+	Name          string `hcl:"name"`
+	Server        bool   `hcl:"server,optional"`
+	Gateway       bool   `hcl:"gateway,optional"`
+	ListenAddress string `hcl:"listen-address,optional"`
+	InitialToken  string `hcl:"initial-token,optional"`
+	Peers         []Peer `hcl:"peer,block"`
+}
+
+type Peer struct {
+	Name    string `hcl:"name,label"`
+	Address string `hcl:"address"`
+	Port    int    `hcl:"port"`
 }

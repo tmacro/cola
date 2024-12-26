@@ -15,7 +15,7 @@ The following blocks are supported in the machine configuration file:
 - <<_mount,mount>>
 - <<_interface,interface>>
 - <<_service,service>>
-
+- <<_etcd,etcd>>
 
 == System
 
@@ -24,6 +24,16 @@ The `system` block is used to configure system-wide settings. It can contain the
 - `hostname` (string): The hostname of the machine.
 - `timezone` (string, optional): The timezone of the machine (e.g., `"UTC"`, `"America/New_York"`).
 - `enable_tty_auto_login` (bool, optional): Enable automatic login on the console.
+
+Sub-blocks:
+
+=== updates
+
+The `updates` sub-block is used to configure the Flatcar OS update settings.
+
+Keys:
+
+- `reboot-strategy` (string): The reboot strategy for updates (one of: `"off"`, `"reboot"`, `"etcd-lock"`).
 
 Example:
 
@@ -331,3 +341,50 @@ The `drop_in` sub-block is used to define systemd drop-in files for a service. I
 You must specify the drop-in `name` as the block label.
 
 Use the examples as a guide to configure your own machine settings. All blocks are optional unless otherwise specified, but you must supply at least one of the recognized blocks (`system`, `user`, `extension`, `container`, `file`, `directory`, `symlink`, `mount`, `interface`, `service`) to have a valid configuration.
+
+== etcd
+
+The `etcd` block is used to configure the integrated etcd service.
+Both servers and gateways require at least one `peer` block to be defined.
+
+Keys:
+
+- `name` (string): The name of the etcd member.
+- `server` (bool, optional): Whether this member is a server (default is `false`).
+- `gateway` (bool, optional): Whether this member is a gateway (default is `false`).
+- `listen-address` (string): The listen address for the etcd member. Only required for servers.
+- `initial-token` (string): The initial cluster token. Only required for servers.
+
+Sub-blocks:
+
+=== peer
+
+The `peer` sub-block is used to configure etcd cluster peers.
+
+Keys:
+
+- `name` (string): The name of the peer.
+- `address` (string): The peer address.
+- `port` (int): The peer port.
+
+Example:
+
+[source,hcl]
+----
+etcd {
+  name = "etcd1"
+  server = true
+  listen-address = "10.0.0.5"
+  initial-token = "etcd-cluster-1"
+
+  peer "etcd2" {
+    address = "10.0.0.6"
+    port = 2380
+  }
+
+  peer "etcd3" {
+    address = "10.0.0.7"
+    port = 2380
+  }
+}
+----

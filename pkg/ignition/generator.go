@@ -102,6 +102,8 @@ func (g *generator) generate(cfg *config.ApplianceConfig) error {
 		generateKernelArguments,
 		generateHostname,
 		generateServices,
+		generateEtcdConfig,
+		generateUpdateConfig,
 	}
 
 	for _, gen := range gens {

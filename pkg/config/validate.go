@@ -25,6 +25,7 @@ var validators = []func(*ApplianceConfig) error{
 	// validateMounts,
 	validateInterfaces,
 	validateServices,
+	validateUpdate,
 }
 
 func validateUsers(config *ApplianceConfig) error {
@@ -201,6 +202,65 @@ func validateServices(config *ApplianceConfig) error {
 			if dropin.Inline == "" && dropin.SourcePath == "" {
 				return fmt.Errorf("service[%d].dropin[%d] must have either inline or source_path", i, j)
 			}
+		}
+	}
+
+	return nil
+}
+
+func validateUpdate(config *ApplianceConfig) error {
+	if config.System == nil {
+		return nil
+	}
+
+	if config.System.Updates == nil {
+		return nil
+	}
+
+	if config.System.Updates.RebootStrategy == "" {
+		return fmt.Errorf("updates.reboot_strategy is required")
+	}
+
+	strat := config.System.Updates.RebootStrategy
+	if strat != "off" && strat != "reboot" && strat != "etcd-lock" {
+		return fmt.Errorf("updates.reboot_strategy must be 'off', 'reboot', or 'etcd-lock'")
+	}
+
+	return nil
+}
+
+func validateEtcd(config *ApplianceConfig) error {
+	if config.Etcd == nil {
+		return nil
+	}
+
+	if config.Etcd.Name == "" {
+		return fmt.Errorf("Etcd.name is required")
+	}
+
+	if config.Etcd.InitialToken == "" {
+		return fmt.Errorf("Etcd.initial_token is required")
+	}
+
+	if config.Etcd.ListenAddress == "" {
+		return fmt.Errorf("Etcd.listen_address is required")
+	}
+
+	if len(config.Etcd.Peers) == 0 {
+		return fmt.Errorf("Etcd.peers is required")
+	}
+
+	for i, peer := range config.Etcd.Peers {
+		if peer.Name == "" {
+			return fmt.Errorf("Etcd.peer[%d].name is required", i)
+		}
+
+		if peer.Address == "" {
+			return fmt.Errorf("Etcd.peer[%d].address is required", i)
+		}
+
+		if peer.Port == 0 {
+			return fmt.Errorf("Etcd.peer[%d].port is required", i)
 		}
 	}
 
