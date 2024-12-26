@@ -4,6 +4,36 @@ COLA is set of tools to build customized Flatcar Container Linux configurations 
 It includes a transpiler to convert a high-level HCL based configuration to a low-level Ignition configuration.
 It is still in early development and breaking changes are to be expected.
 
+## Example
+
+```hcl
+# machine.hcl
+system {
+  hostname = "my-machine"
+}
+
+user "admin" {
+  groups = ["sudo"]
+  ssh_authorized_keys = [
+    "ssh-ed25519 AAAAAAAA...",
+  ]
+}
+
+container "nginx" {
+  image = "nginx:latest"
+
+  volume "/usr/share/nginx/html" {
+    source = "/var/www"
+  }
+}
+
+extension "tailscale" {
+  version = "1.76.6"
+  arch = "x86-64"
+  bakery_url = "https://github.com/flatcar/sysext-bakery/releases/download/latest/"
+}
+```
+
 ## Installation
 
 1. **Download** a release from the [GitHub Releases](https://github.com/username/cola/releases) page (if available), or **build from source**:
