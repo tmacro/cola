@@ -10,8 +10,8 @@ DNS={{ .DNS }}
 {{- end -}}
 
 [Address]
-{{ if .Address -}}
-Address={{ .Address }}
+{{ range .Addresses -}}
+Address={{ . }}
 {{ end -}}
 {{ if .DHCP -}}
 DHCP=yes

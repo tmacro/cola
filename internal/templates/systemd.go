@@ -58,7 +58,7 @@ type networkConfig struct {
 	Type       string
 	Name       string
 	MACAddress string
-	Address    string
+	Addresses  []string
 	Gateway    string
 	DNS        string
 	DHCP       bool
@@ -67,10 +67,17 @@ type networkConfig struct {
 }
 
 func SystemdNetwork(network config.Interface) (string, error) {
+	addresses := []string{}
+	if network.Address != "" {
+		addresses = append(addresses, network.Address)
+	}
+
+	addresses = append(addresses, network.Addresses...)
+
 	cfg := networkConfig{
 		Name:       network.Name,
 		MACAddress: network.MACAddress,
-		Address:    network.Address,
+		Addresses:  addresses,
 		Gateway:    network.Gateway,
 		DNS:        network.DNS,
 		DHCP:       network.DHCP,
@@ -82,11 +89,11 @@ func SystemdNetwork(network config.Interface) (string, error) {
 
 func SystemdVlanNetwork(vlan config.VLAN) (string, error) {
 	cfg := networkConfig{
-		Name:    vlan.Name,
-		Address: vlan.Address,
-		Gateway: vlan.Gateway,
-		DNS:     vlan.DNS,
-		DHCP:    vlan.DHCP,
+		Name:      vlan.Name,
+		Addresses: []string{vlan.Address},
+		Gateway:   vlan.Gateway,
+		DNS:       vlan.DNS,
+		DHCP:      vlan.DHCP,
 	}
 
 	return renderTemplate(systemdVlanNetworkTpl, cfg)

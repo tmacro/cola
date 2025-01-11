@@ -126,12 +126,16 @@ func validateInterfaces(config *ApplianceConfig) error {
 			return fmt.Errorf("interface[%d].name and interface[%d].mac_address are mutually exclusive", i, i)
 		}
 
-		if iface.Address != "" && iface.DHCP {
+		if (iface.Address != "" || len(iface.Addresses) > 0) && iface.DHCP {
 			return fmt.Errorf("interface[%d].address and interface[%d].dhcp are mutually exclusive", i, i)
 		}
 
-		if len(iface.VLANs) == 0 && iface.Address == "" && !iface.DHCP {
-			return fmt.Errorf("interface[%d].address or interface[%d].dhcp is required", i, i)
+		if iface.Address != "" && len(iface.Addresses) > 0 {
+			return fmt.Errorf("interface[%d].address and interface[%d].addresses are mutually exclusive", i, i)
+		}
+
+		if len(iface.VLANs) == 0 && iface.Address == "" && len(iface.Addresses) == 0 && !iface.DHCP {
+			return fmt.Errorf("interface[%d].address, interface[%d].addresses, or interface[%d].dhcp is required", i, i, i)
 		}
 
 		if iface.Address != "" && iface.Gateway == "" {

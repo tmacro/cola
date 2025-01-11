@@ -91,13 +91,14 @@ type Mount struct {
 }
 
 type Interface struct {
-	Name       string `hcl:"name,optional"`
-	MACAddress string `hcl:"mac_address,optional"`
-	Gateway    string `hcl:"gateway,optional"`
-	Address    string `hcl:"address,optional"`
-	DNS        string `hcl:"dns,optional"`
-	DHCP       bool   `hcl:"dhcp,optional"`
-	VLANs      []VLAN `hcl:"vlan,block"`
+	Name       string   `hcl:"name,optional"`
+	MACAddress string   `hcl:"mac_address,optional"`
+	Gateway    string   `hcl:"gateway,optional"`
+	Address    string   `hcl:"address,optional"`
+	Addresses  []string `hcl:"addresses,optional"`
+	DNS        string   `hcl:"dns,optional"`
+	DHCP       bool     `hcl:"dhcp,optional"`
+	VLANs      []VLAN   `hcl:"vlan,block"`
 }
 
 type VLAN struct {

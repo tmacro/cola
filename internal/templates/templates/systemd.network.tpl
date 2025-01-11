@@ -1,24 +1,25 @@
 [Match]
 {{ if .Name -}}
 Name={{ .Name }}
-{{ end -}}
+{{- end }}
 
 {{- if .MACAddress -}}
 MACAddress={{ .MACAddress }}
-{{ end -}}
+{{- end }}
 
 [Network]
-{{ if .Gateway -}}
+{{- if .Gateway }}
 Gateway={{ .Gateway }}
-{{ end -}}
+{{- end }}
 
 {{- if .DNS -}}
 DNS={{ .DNS }}
-{{ end }}
+{{- end }}
 
-{{- if .Address }}
-Address={{ .Address }}
-{{ end -}}
+
+{{- range .Addresses }}
+Address={{ . }}
+{{- end }}
 
 {{ range .VLANs -}}
 VLAN={{ .Name }}
