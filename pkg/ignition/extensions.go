@@ -66,12 +66,7 @@ func generateExtensions(cfg *config.ApplianceConfig, g *generator) error {
 	g.Files = append(g.Files, defaultExtensionFiles...)
 	g.Units = append(g.Units, defaultExtensionUnits...)
 
-	dropins := []ignitionTypes.Dropin{
-		{
-			Name:     "sysext.conf",
-			Contents: toPtr("[Service]\nExecStartPost=systemctl restart systemd-sysext"),
-		},
-	}
+	dropins := []ignitionTypes.Dropin{}
 
 	for _, ext := range cfg.Extensions {
 		extPath := fmt.Sprintf("/opt/extensions/%s/%s.raw", ext.Name, FormatExtensionName(ext.Name, ext.Version, ext.Arch))
