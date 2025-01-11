@@ -24,6 +24,7 @@ The `system` block is used to configure system-wide settings. It can contain the
 - `hostname` (string): The hostname of the machine.
 - `timezone` (string, optional): The timezone of the machine (e.g., `"UTC"`, `"America/New_York"`).
 - `enable_tty_auto_login` (bool, optional): Enable automatic login on the console.
+- `power-profile` (string, optional): The power profile to use (e.g., `"performance"`, `"ondemand"`, `"powersave"`).
 
 Sub-blocks:
 
@@ -43,6 +44,11 @@ system {
   hostname = "cola"
   timezone = "UTC"
   enable_tty_auto_login = true
+  power-profile = "performance"
+
+  updates {
+    reboot-strategy = "reboot"
+  }
 }
 ----
 

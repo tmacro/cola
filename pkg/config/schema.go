@@ -19,6 +19,7 @@ type System struct {
 	Timezone           string   `hcl:"timezone,optional"`
 	EnableTTYAutoLogin bool     `hcl:"enable_tty_auto_login,optional"`
 	Updates            *Updates `hcl:"updates,block"`
+	PowerProfile       string   `hcl:"power-profile,optional"`
 }
 
 type Updates struct {

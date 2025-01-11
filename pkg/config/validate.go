@@ -1,6 +1,10 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+	"strings"
+)
 
 func ValidateConfig(config *ApplianceConfig) error {
 	if config.System == nil {
@@ -17,6 +21,7 @@ func ValidateConfig(config *ApplianceConfig) error {
 }
 
 var validators = []func(*ApplianceConfig) error{
+	validateSystem,
 	validateUsers,
 	validateExtensions,
 	validateContainers,
@@ -26,6 +31,36 @@ var validators = []func(*ApplianceConfig) error{
 	validateInterfaces,
 	validateServices,
 	validateUpdate,
+}
+
+// etcd-lock    Reboot after first taking a distributed lock in etcd (reboot window applies)
+// reboot       Reboot immediately after an update is applied (reboot window applies)
+// off          Do not reboot after updates are applied
+var validRebootStrategies = []string{"off", "reboot", "etcd-lock"}
+
+// performance    Default. Operate at the maximum frequency
+// ondemand       Dynamically scale frequency at 75% cpu load
+// conservative   Dynamically scale frequency at 95% cpu load
+// powersave      Operate at the minimum frequency
+// userspace      Controlled by a userspace application via the `scaling_setspeed` file
+var validPowerProfiles = []string{"performance", "ondemand", "conservative", "powersave", "userspace"}
+
+func validateSystem(config *ApplianceConfig) error {
+	if config.System.Updates != nil {
+		valid := slices.Contains(validRebootStrategies, config.System.Updates.RebootStrategy)
+		if !valid {
+			return fmt.Errorf("system.updates.reboot_strategy must be one of: %s", strings.Join(validRebootStrategies, ", "))
+		}
+	}
+
+	if config.System.PowerProfile != "" {
+		valid := slices.Contains(validPowerProfiles, config.System.PowerProfile)
+		if !valid {
+			return fmt.Errorf("system.power-profile must be one of: %s", strings.Join(validPowerProfiles, ", "))
+		}
+	}
+
+	return nil
 }
 
 func validateUsers(config *ApplianceConfig) error {
