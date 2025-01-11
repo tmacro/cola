@@ -256,6 +256,7 @@ The `interface` block is used to configure network interfaces. It contains the f
 - `mac_address` (string, optional): The desired MAC address for the interface.
 - `gateway` (string, optional): The default gateway.
 - `address` (string, optional): The IPv4 or IPv6 address with CIDR (e.g., `"192.168.1.10/24"`).
+- `addresses` (array of strings, optional): An array of IPv4 or IPv6 addresses with CIDR. Mutually exclusive with `address`.
 - `dns` (string, optional): DNS nameserver address (e.g., `"8.8.8.8"`).
 - `dhcp` (bool, optional): Whether to enable DHCP on this interface.
 - `vlan` (sub-block, optional): One or more VLAN sub-blocks for VLAN configuration.
