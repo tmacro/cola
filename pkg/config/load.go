@@ -5,142 +5,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/rs/zerolog/log"
+	"github.com/zclconf/go-cty/cty"
 )
 
 var (
 	ErrNoSystemBlock = fmt.Errorf("system block is required")
 )
-
-func getConfigFilesInDir(path string) ([]string, error) {
-	files, err := os.ReadDir(path)
-	if err != nil {
-		return nil, err
-	}
-
-	paths := make([]string, 0)
-
-	for _, file := range files {
-		if file.IsDir() || filepath.Ext(file.Name()) != ".hcl" {
-			continue
-		}
-
-		paths = append(paths, path+"/"+file.Name())
-	}
-
-	return paths, nil
-}
-
-func ReadConfig(paths, bases []string, strict bool) (*ApplianceConfig, error) {
-	config, err := readConfig(paths, strict)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(bases) > 0 {
-		baseConfig, err := readConfig(bases, false)
-		if err != nil {
-			return nil, err
-		}
-
-		config = MergeConfigs(baseConfig, config)
-	}
-
-	return config, nil
-}
-
-func readConfig(paths []string, strict bool) (*ApplianceConfig, error) {
-	configFilePaths := make([]string, 0)
-	for _, path := range paths {
-		fi, err := os.Stat(path)
-		if err != nil {
-			return nil, err
-		}
-
-		if fi.IsDir() {
-			dirPaths, err := getConfigFilesInDir(path)
-			if err != nil {
-				return nil, err
-			}
-
-			configFilePaths = append(configFilePaths, dirPaths...)
-		} else {
-			configFilePaths = append(configFilePaths, path)
-		}
-	}
-
-	return readConfigFiles(configFilePaths, strict)
-}
-
-func readConfigFile(path string, strict bool) (*ApplianceConfig, error) {
-	var config ApplianceConfig
-	err := hclsimple.DecodeFile(path, nil, &config)
-	if err != nil {
-		return nil, ParseError{Err: err, Path: path}
-	}
-
-	if strict && config.System == nil {
-		return nil, ErrNoSystemBlock
-	}
-
-	if len(config.Files) > 0 {
-		files := make([]File, len(config.Files))
-		for i, file := range config.Files {
-			f := file
-			if file.SourcePath != "" && !filepath.IsAbs(file.SourcePath) {
-				f.SourcePath = filepath.Join(filepath.Dir(path), file.SourcePath)
-			}
-			files[i] = f
-		}
-
-		config.Files = files
-	}
-
-	if len(config.Services) > 0 {
-		services := make([]Service, len(config.Services))
-		for i, service := range config.Services {
-			svc := service
-			if service.SourcePath != "" && !filepath.IsAbs(service.SourcePath) {
-				svc.SourcePath = filepath.Join(filepath.Dir(path), service.SourcePath)
-			}
-
-			if len(service.DropIns) > 0 {
-				dropins := make([]DropIn, len(service.DropIns))
-				for j, dropin := range service.DropIns {
-					drp := dropin
-					if dropin.SourcePath != "" && !filepath.IsAbs(dropin.SourcePath) {
-						drp.SourcePath = filepath.Join(filepath.Dir(path), dropin.SourcePath)
-					}
-					dropins[j] = drp
-				}
-				svc.DropIns = dropins
-			}
-			services[i] = svc
-		}
-		config.Services = services
-	}
-
-	return &config, nil
-}
-
-func readConfigFiles(paths []string, strict bool) (*ApplianceConfig, error) {
-	var merged *ApplianceConfig
-
-	for _, path := range paths {
-		config, err := readConfigFile(path, false)
-		if err != nil {
-			return nil, ParseError{Err: err, Path: path}
-		}
-
-		merged = MergeConfigs(merged, config)
-	}
-
-	if strict && merged.System == nil {
-		return nil, ErrNoSystemBlock
-	}
-
-	return merged, nil
-}
 
 func MergeConfigs(base, override *ApplianceConfig) *ApplianceConfig {
 	if base == nil {
@@ -198,4 +72,270 @@ func MergeConfigs(base, override *ApplianceConfig) *ApplianceConfig {
 	base.Services = append(base.Services, override.Services...)
 
 	return base
+}
+
+func getFilesInDir(path, ext string) ([]string, error) {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	paths := make([]string, 0)
+
+	for _, file := range files {
+		fp := filepath.Join(path, file.Name())
+
+		if file.IsDir() {
+			resolved, err := resolveFilePath(fp, ext)
+			if err != nil {
+				return nil, err
+			}
+
+			paths = append(paths, resolved...)
+		} else if filepath.Ext(fp) == ext {
+			paths = append(paths, fp)
+		}
+	}
+
+	return paths, nil
+}
+
+func resolveFilePath(path, ext string) ([]string, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if fi.IsDir() {
+		dirPaths, err := getFilesInDir(path, ext)
+		if err != nil {
+			return nil, err
+		}
+		return dirPaths, nil
+	}
+
+	return []string{path}, nil
+}
+
+func resolveFilePaths(paths []string, ext string) ([]string, error) {
+	filePaths := make([]string, 0)
+	for _, path := range paths {
+		paths, err := resolveFilePath(path, ext)
+		if err != nil {
+			return nil, err
+		}
+
+		filePaths = append(filePaths, paths...)
+	}
+
+	return filePaths, nil
+}
+
+func mergePartialConfigs(base, override PartialConfig) PartialConfig {
+	base.Variables = append(base.Variables, override.Variables...)
+	return base
+}
+
+func readConfigPartial(paths []string) (*PartialConfig, error) {
+	var merged PartialConfig
+
+	evalCtx := &hcl.EvalContext{
+		Variables: map[string]cty.Value{
+			"string": cty.StringVal(VariableTypeString),
+			"bool":   cty.StringVal(VariableTypeBool),
+			"number": cty.StringVal(VariableTypeNumber),
+		},
+	}
+
+	for _, path := range paths {
+		var config PartialConfig
+		err := hclsimple.DecodeFile(path, evalCtx, &config)
+		if err != nil {
+			return nil, ParseError{Err: err, Path: path}
+		}
+
+		merged = mergePartialConfigs(merged, config)
+	}
+
+	return &merged, nil
+}
+
+func ctyValueToString(v cty.Value) string {
+	switch v.Type() {
+	case cty.String:
+		return v.AsString()
+	case cty.Number:
+		return v.AsBigFloat().String()
+	case cty.Bool:
+		return fmt.Sprintf("%t", v.True())
+	default:
+		return "<unknown>"
+	}
+}
+
+func loadVariables(paths, values []string) (map[string]cty.Value, error) {
+	partialConfig, err := readConfigPartial(paths)
+	if err != nil {
+		return nil, err
+	}
+
+	variableSpec := hcldec.ObjectSpec{}
+	for _, variable := range partialConfig.Variables {
+		var varType cty.Type
+		switch variable.Type {
+		case VariableTypeString:
+			log.Debug().Str("name", variable.Name).Str("type", "string").Msg("Discovered variable")
+			varType = cty.String
+		case VariableTypeNumber:
+			log.Debug().Str("name", variable.Name).Str("type", "number").Msg("Discovered variable")
+			varType = cty.Number
+		case VariableTypeBool:
+			log.Debug().Str("name", variable.Name).Str("type", "boolean").Msg("Discovered variable")
+			varType = cty.Bool
+		default:
+			return nil, fmt.Errorf("unsupported variable type: %d", variable.Type)
+		}
+
+		variableSpec[variable.Name] = &hcldec.AttrSpec{
+			Name:     variable.Name,
+			Type:     varType,
+			Required: false,
+		}
+	}
+
+	variables := make(map[string]cty.Value)
+	for _, valuePath := range values {
+		data, err := os.ReadFile(valuePath)
+		if err != nil {
+			return nil, err
+		}
+
+		var value VariableFile
+		err = hclsimple.Decode("variable.hcl", data, nil, &value)
+		if err != nil {
+			return nil, ParseError{Err: err, Path: valuePath}
+		}
+
+		val, diags := hcldec.Decode(value.Body, variableSpec, nil)
+		if diags.HasErrors() {
+			return nil, diags
+		}
+
+		for k, v := range val.AsValueMap() {
+			if v.IsNull() {
+				continue
+			}
+
+			log.Debug().
+				Str("name", k).
+				Str("value", ctyValueToString(v)).
+				Str("file", filepath.Base(valuePath)).
+				Msg("Loaded value for variable")
+
+			_, ok := variables[k]
+			if ok {
+				return nil, fmt.Errorf("variable %s already defined", k)
+			}
+
+			variables[k] = v
+		}
+	}
+
+	for k := range variableSpec {
+		_, ok := variables[k]
+		if !ok {
+			return nil, fmt.Errorf("variable %s has no value", k)
+		}
+	}
+
+	return variables, nil
+}
+
+func readConfigFile(path string, evalCtx *hcl.EvalContext) (*ApplianceConfig, error) {
+	var config ApplianceConfig
+	err := hclsimple.DecodeFile(path, evalCtx, &config)
+	if err != nil {
+		return nil, ParseError{Err: err, Path: path}
+	}
+
+	if len(config.Files) > 0 {
+		files := make([]File, len(config.Files))
+		for i, file := range config.Files {
+			f := file
+			if file.SourcePath != "" && !filepath.IsAbs(file.SourcePath) {
+				f.SourcePath = filepath.Join(filepath.Dir(path), file.SourcePath)
+			}
+			files[i] = f
+		}
+
+		config.Files = files
+	}
+
+	if len(config.Services) > 0 {
+		services := make([]Service, len(config.Services))
+		for i, service := range config.Services {
+			svc := service
+			if service.SourcePath != "" && !filepath.IsAbs(service.SourcePath) {
+				svc.SourcePath = filepath.Join(filepath.Dir(path), service.SourcePath)
+			}
+
+			if len(service.DropIns) > 0 {
+				dropins := make([]DropIn, len(service.DropIns))
+				for j, dropin := range service.DropIns {
+					drp := dropin
+					if dropin.SourcePath != "" && !filepath.IsAbs(dropin.SourcePath) {
+						drp.SourcePath = filepath.Join(filepath.Dir(path), dropin.SourcePath)
+					}
+					dropins[j] = drp
+				}
+				svc.DropIns = dropins
+			}
+			services[i] = svc
+		}
+		config.Services = services
+	}
+
+	return &config, nil
+}
+
+func ReadConfig(paths, values []string) (*ApplianceConfig, error) {
+	configPaths, err := resolveFilePaths(paths, ".hcl")
+	if err != nil {
+		return nil, err
+	}
+
+	valuePaths, err := resolveFilePaths(values, ".cvars")
+	if err != nil {
+		return nil, err
+	}
+
+	variables, err := loadVariables(configPaths, valuePaths)
+	if err != nil {
+		return nil, err
+	}
+
+	evalCtx := &hcl.EvalContext{
+		Variables: map[string]cty.Value{
+			"string": cty.StringVal(VariableTypeString),
+			"bool":   cty.StringVal(VariableTypeBool),
+			"number": cty.StringVal(VariableTypeNumber),
+			"var":    cty.ObjectVal(variables),
+		},
+	}
+
+	var merged *ApplianceConfig
+	for _, cPath := range configPaths {
+		config, err := readConfigFile(cPath, evalCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		merged = MergeConfigs(merged, config)
+	}
+
+	if merged.System == nil {
+		return nil, ErrNoSystemBlock
+	}
+
+	return merged, nil
 }

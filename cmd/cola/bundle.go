@@ -18,7 +18,7 @@ import (
 
 type BundleCmd struct {
 	Config       []string `short:"c" help:"Path to the configuration file or directory." type:"path"`
-	Base         []string `short:"b" help:"Use this config as a base to extend from." type:"path"`
+	VarFile      []string `short:"v" help:"Path to the files containing variable values." type:"path"`
 	Image        string   `short:"f" help:"Path to the Flatcar Linux image." type:"existingpath" required:""`
 	GenIgnition  bool     `short:"g" help:"Generate the Ignition config. (cannot be used with --ignition)"`
 	Ignition     string   `short:"i" help:"Path to the Ignition config." type:"existingpath" optional:""`
@@ -27,7 +27,7 @@ type BundleCmd struct {
 }
 
 func (cmd *BundleCmd) Run(logger *zerolog.Logger) error {
-	cfg, err := config.ReadConfig(cmd.Config, []string{}, false)
+	cfg, err := config.ReadConfig(cmd.Config, cmd.VarFile)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to read configuration")
 	}

@@ -1,5 +1,22 @@
 package config
 
+import "github.com/hashicorp/hcl/v2"
+
+const (
+	VariableTypeString string = "string"
+	VariableTypeNumber string = "number"
+	VariableTypeBool   string = "bool"
+)
+
+type PartialConfig struct {
+	Variables []Variable `hcl:"variable,block"`
+	Remain    hcl.Body   `hcl:",remain"`
+}
+
+type VariableFile struct {
+	Body hcl.Body `hcl:",remain"`
+}
+
 type ApplianceConfig struct {
 	System      *System     `hcl:"system,block"`
 	Etcd        *Etcd       `hcl:"etcd,block"`
@@ -12,6 +29,7 @@ type ApplianceConfig struct {
 	Mounts      []Mount     `hcl:"mount,block"`
 	Interfaces  []Interface `hcl:"interface,block"`
 	Services    []Service   `hcl:"service,block"`
+	Variables   []Variable  `hcl:"variable,block"`
 }
 
 type System struct {
@@ -138,4 +156,10 @@ type Peer struct {
 	Name    string `hcl:"name,label"`
 	Address string `hcl:"address"`
 	Port    int    `hcl:"port"`
+}
+
+type Variable struct {
+	Name   string   `hcl:"name,label"`
+	Type   string   `hcl:"type"`
+	Remain hcl.Body `hcl:",remain"`
 }

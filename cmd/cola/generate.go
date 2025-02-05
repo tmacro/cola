@@ -11,6 +11,7 @@ import (
 
 type GenerateCmd struct {
 	Config            []string `short:"c" help:"Path to the configuration file or directory." type:"path"`
+	VarFile           []string `short:"v" help:"Path to the files containing variable values." type:"path"`
 	Output            string   `short:"o" help:"Output file."`
 	BundledExtensions bool     `short:"b" help:"Assume extensions are will be bundled into the image."`
 	ExtensionDir      string   `short:"e" help:"Directory containing sysexts." type:"existingdir" optional:""`
@@ -21,7 +22,7 @@ func (cmd *GenerateCmd) Run(logger *zerolog.Logger) error {
 		logger.Fatal().Msg("No configuration file specified")
 	}
 
-	cfg, err := config.ReadConfig(cmd.Config, []string{}, false)
+	cfg, err := config.ReadConfig(cmd.Config, cmd.VarFile)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to read configuration")
 	}
