@@ -6,43 +6,14 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var CLI struct {
-	LogLevel  string      `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"debug"`
+	LogLevel  string      `help:"Set the log level." enum:"trace,debug,info,warn,error" default:"info"`
 	LogFormat string      `enum:"json,text" default:"text" help:"Set the log format. (json, text)"`
 	Generate  GenerateCmd `help:"Generate an Ignition config." cmd:""`
 	Bundle    BundleCmd   `help:"Bundle sysexts and an Ignition config with a Flatcar Linux image." cmd:""`
-}
-
-func createLogger(level, format string) *zerolog.Logger {
-	var lvl zerolog.Level
-	switch level {
-	case "trace":
-		lvl = zerolog.TraceLevel
-	case "debug":
-		lvl = zerolog.DebugLevel
-	case "info":
-		lvl = zerolog.InfoLevel
-	case "warn":
-		lvl = zerolog.WarnLevel
-	case "error":
-		lvl = zerolog.ErrorLevel
-	default:
-		panic("invalid log level: " + level)
-	}
-
-	var writer io.Writer
-	switch format {
-	case "json":
-		writer = os.Stdout
-	case "text":
-		writer = zerolog.ConsoleWriter{Out: os.Stdout}
-	default:
-		panic("invalid log format: " + format)
-	}
-	logger := zerolog.New(writer).Level(lvl).With().Timestamp().Logger()
-	return &logger
 }
 
 func main() {
@@ -54,8 +25,34 @@ func main() {
 		}),
 	)
 
-	logger := createLogger(CLI.LogLevel, CLI.LogFormat)
+	var logLevel zerolog.Level
+	switch CLI.LogLevel {
+	case "trace":
+		logLevel = zerolog.TraceLevel
+	case "debug":
+		logLevel = zerolog.DebugLevel
+	case "info":
+		logLevel = zerolog.InfoLevel
+	case "warn":
+		logLevel = zerolog.WarnLevel
+	case "error":
+		logLevel = zerolog.ErrorLevel
+	default:
+		panic("invalid log level: " + CLI.LogLevel)
+	}
 
-	err := cmd.Run(logger)
+	var writer io.Writer
+	switch CLI.LogFormat {
+	case "json":
+		writer = os.Stdout
+	case "text":
+		writer = zerolog.ConsoleWriter{Out: os.Stdout}
+	default:
+		panic("invalid log format: " + CLI.LogFormat)
+	}
+
+	log.Logger = zerolog.New(writer).Level(logLevel).With().Timestamp().Logger()
+
+	err := cmd.Run()
 	cmd.FatalIfErrorf(err)
 }

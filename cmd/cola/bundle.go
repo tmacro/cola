@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/moby/sys/mount"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/tmacro/cola/internal/templates"
 	"github.com/tmacro/cola/pkg/config"
 	"github.com/tmacro/cola/pkg/download"
@@ -26,20 +26,20 @@ type BundleCmd struct {
 	ExtensionDir string   `short:"e" help:"Directory containing sysexts." type:"existingdir" optional:""`
 }
 
-func (cmd *BundleCmd) Run(logger *zerolog.Logger) error {
+func (cmd *BundleCmd) Run() error {
 	cfg, err := config.ReadConfig(cmd.Config, cmd.VarFile)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to read configuration")
+		log.Fatal().Err(err).Msg("Failed to read configuration")
 	}
 
 	err = config.ValidateConfig(cfg)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to validate configuration")
+		log.Fatal().Err(err).Msg("failed to validate configuration")
 	}
 
 	workdir, err := os.MkdirTemp("", "cola-bundle")
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to create temporary directory")
+		log.Fatal().Err(err).Msg("failed to create temporary directory")
 	}
 
 	defer os.RemoveAll(workdir)
@@ -47,22 +47,22 @@ func (cmd *BundleCmd) Run(logger *zerolog.Logger) error {
 	imagePath := filepath.Join(workdir, "flatcar_production_image.bin")
 	err = copyFile(cmd.Image, imagePath)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to copy image")
+		log.Fatal().Err(err).Msg("failed to copy image")
 	}
 
-	err = fetchExtensions(workdir, cmd.ExtensionDir, cfg, logger)
+	err = fetchExtensions(workdir, cmd.ExtensionDir, cfg)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to fetch extensions")
+		log.Fatal().Err(err).Msg("failed to fetch extensions")
 	}
 
-	cleanupMounts, err := mountImage(imagePath, filepath.Join(workdir, "mnt"), logger)
+	cleanupMounts, err := mountImage(imagePath, filepath.Join(workdir, "mnt"))
 	if err != nil {
-		logger.Fatal().Err(err).Msg("failed to mount image")
+		log.Fatal().Err(err).Msg("failed to mount image")
 	}
 
-	err = installSysExts(cfg, workdir, logger)
+	err = installSysExts(cfg, workdir)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to install extensions")
+		log.Error().Err(err).Msg("failed to install extensions")
 		cleanupMounts()
 		return err
 	}
@@ -71,42 +71,42 @@ func (cmd *BundleCmd) Run(logger *zerolog.Logger) error {
 	if cmd.GenIgnition {
 		ignJson, err := ignition.Generate(cfg, ignition.WithBundledExtensions(), ignition.WithExtensionDir(workdir))
 		if err != nil {
-			logger.Fatal().Err(err).Msg("Failed to generate Ignition config")
+			log.Fatal().Err(err).Msg("Failed to generate Ignition config")
 		}
 
 		f, err := os.Create(ignPath)
 		if err != nil {
-			logger.Fatal().Err(err).Msg("Failed to create Ignition config")
+			log.Fatal().Err(err).Msg("Failed to create Ignition config")
 		}
 
 		_, err = f.Write(ignJson)
 		if err != nil {
-			logger.Fatal().Err(err).Msg("Failed to write Ignition config")
+			log.Fatal().Err(err).Msg("Failed to write Ignition config")
 		}
 
 		err = f.Close()
 		if err != nil {
-			logger.Fatal().Err(err).Msg("Failed to close Ignition config")
+			log.Fatal().Err(err).Msg("Failed to close Ignition config")
 		}
 	} else {
 		err = copyFile(cmd.Ignition, ignPath)
 		if err != nil {
-			logger.Fatal().Err(err).Msg("failed to copy Ignition config")
+			log.Fatal().Err(err).Msg("failed to copy Ignition config")
 			cleanupMounts()
 			return err
 		}
 	}
 
-	err = installIgnition(workdir, ignPath, logger)
+	err = installIgnition(workdir, ignPath)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to install Ignition config")
+		log.Error().Err(err).Msg("failed to install Ignition config")
 		cleanupMounts()
 		return err
 	}
 
 	err = cleanupMounts()
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Error cleaning up mounts")
+		log.Fatal().Err(err).Msg("Error cleaning up mounts")
 	}
 
 	return nil
@@ -140,10 +140,10 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-func copyOrDownload(srcPath, srcURL, destPath string, logger *zerolog.Logger) error {
+func copyOrDownload(srcPath, srcURL, destPath string) error {
 	if srcPath != "" {
 		if fileExists(srcPath) {
-			logger.Info().Str("source", srcPath).Str("destination", destPath).Msg("Using existing file")
+			log.Info().Str("source", srcPath).Str("destination", destPath).Msg("Using existing file")
 			if err := copyFile(srcPath, destPath); err != nil {
 				return fmt.Errorf("failed to copy file: %w", err)
 			}
@@ -151,7 +151,7 @@ func copyOrDownload(srcPath, srcURL, destPath string, logger *zerolog.Logger) er
 		}
 	}
 
-	logger.Info().Str("url", srcURL).Str("destination", destPath).Msg("Downloading file")
+	log.Info().Str("url", srcURL).Str("destination", destPath).Msg("Downloading file")
 	if err := download.Get(srcURL, destPath); err != nil {
 		return fmt.Errorf("failed to download file: %w", err)
 	}
@@ -159,7 +159,7 @@ func copyOrDownload(srcPath, srcURL, destPath string, logger *zerolog.Logger) er
 	return nil
 }
 
-func fetchExtensions(workdir, extdir string, cfg *config.ApplianceConfig, logger *zerolog.Logger) error {
+func fetchExtensions(workdir, extdir string, cfg *config.ApplianceConfig) error {
 	for _, ext := range cfg.Extensions {
 		extFilename := ignition.FormatExtensionName(ext.Name, ext.Version, ext.Arch) + ".raw"
 		extDestPath := filepath.Join(workdir, extFilename)
@@ -173,12 +173,12 @@ func fetchExtensions(workdir, extdir string, cfg *config.ApplianceConfig, logger
 		}
 
 		extUrl := ignition.FormatExtensionURL(ext.BakeryUrl, ext.Name, ext.Version, ext.Arch)
-		if err := copyOrDownload(extPath, extUrl, extDestPath, logger); err != nil {
+		if err := copyOrDownload(extPath, extUrl, extDestPath); err != nil {
 			return fmt.Errorf("failed to download extension: %w", err)
 		}
 
 		transferCfgUrl := ignition.FormatExtensionTransferConfigURL(ext.BakeryUrl, ext.Name)
-		if err := copyOrDownload(transferCfgPath, transferCfgUrl, transferCfgDestPath, logger); err != nil {
+		if err := copyOrDownload(transferCfgPath, transferCfgUrl, transferCfgDestPath); err != nil {
 			return fmt.Errorf("failed to download transfer config: %w", err)
 		}
 	}
@@ -191,13 +191,13 @@ const (
 	ROOT_PARTITION = "p9"
 )
 
-func mountImage(image, mountpoint string, logger *zerolog.Logger) (func() error, error) {
+func mountImage(image, mountpoint string) (func() error, error) {
 	loopDev, err := losetup.SetupDevice(image)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Debug().Str("device", loopDev).Msg("Mounted image")
+	log.Debug().Str("device", loopDev).Msg("Mounted image")
 
 	oemMount := filepath.Join(mountpoint, "oem")
 	rootMount := filepath.Join(mountpoint, "root")
@@ -217,38 +217,38 @@ func mountImage(image, mountpoint string, logger *zerolog.Logger) (func() error,
 	cleanupMounts := func() error {
 		hasError := false
 
-		logger.Debug().Str("mountpoint", oemMount).Msg("Unmounting OEM partition")
+		log.Debug().Str("mountpoint", oemMount).Msg("Unmounting OEM partition")
 		err := mount.Unmount(oemMount)
 		if err != nil {
 			hasError = true
-			logger.Error().Err(err).Msg("failed to unmount OEM partition")
+			log.Error().Err(err).Msg("failed to unmount OEM partition")
 		}
 
-		logger.Debug().Str("mountpoint", rootMount).Msg("Unmounting root partition")
+		log.Debug().Str("mountpoint", rootMount).Msg("Unmounting root partition")
 		err = mount.Unmount(rootMount)
 		if err != nil {
 			hasError = true
-			logger.Error().Err(err).Msg("failed to unmount root partition")
+			log.Error().Err(err).Msg("failed to unmount root partition")
 		}
 
 		err = losetup.DetachDevice(loopDev)
 		if err != nil {
 			hasError = true
-			logger.Error().Err(err).Msg("failed to detach loop device")
+			log.Error().Err(err).Msg("failed to detach loop device")
 		}
 
 		if hasError {
 			return fmt.Errorf("errors occurred during image unmount")
 		}
 
-		logger.Debug().Msg("Unmounted image")
+		log.Debug().Msg("Unmounted image")
 		return nil
 	}
 
 	oemPart := loopDev + OEM_PARTITION
 	rootPart := loopDev + ROOT_PARTITION
 
-	logger.Debug().Str("partition", oemPart).Str("mountpoint", oemMount).Msg("Mounting OEM partition")
+	log.Debug().Str("partition", oemPart).Str("mountpoint", oemMount).Msg("Mounting OEM partition")
 
 	err = exec.Command("mount", "-o", "loop", loopDev+OEM_PARTITION, oemMount).Run()
 	if err != nil {
@@ -256,7 +256,7 @@ func mountImage(image, mountpoint string, logger *zerolog.Logger) (func() error,
 		return nil, fmt.Errorf("failed to mount OEM partition: %w", err)
 	}
 
-	logger.Debug().Str("partition", rootPart).Str("mountpoint", rootMount).Msg("Mounting root partition")
+	log.Debug().Str("partition", rootPart).Str("mountpoint", rootMount).Msg("Mounting root partition")
 
 	err = exec.Command("mount", "-o", "loop", loopDev+ROOT_PARTITION, rootMount).Run()
 	if err != nil {
@@ -267,14 +267,14 @@ func mountImage(image, mountpoint string, logger *zerolog.Logger) (func() error,
 	return cleanupMounts, nil
 }
 
-func installSysExts(cfg *config.ApplianceConfig, workdir string, logger *zerolog.Logger) error {
+func installSysExts(cfg *config.ApplianceConfig, workdir string) error {
 	installPath := filepath.Join(workdir, "mnt", "root", "opt", "extensions")
 	symlinkPath := filepath.Join(workdir, "mnt", "root", "etc", "extensions")
 
 	transferCfgs := make([]templates.Tmpfile, 0)
 
 	for _, ext := range cfg.Extensions {
-		logger.Info().Str("name", ext.Name).Str("version", ext.Version).Str("arch", ext.Arch).Msg("Installing extension")
+		log.Info().Str("name", ext.Name).Str("version", ext.Version).Str("arch", ext.Arch).Msg("Installing extension")
 		err := os.MkdirAll(filepath.Join(installPath, ext.Name), 0o755)
 		if err != nil {
 			return fmt.Errorf("failed to create extension directory: %w", err)
@@ -353,8 +353,8 @@ func installSysExts(cfg *config.ApplianceConfig, workdir string, logger *zerolog
 	return nil
 }
 
-func installIgnition(workdir, ignitionPath string, logger *zerolog.Logger) error {
-	logger.Info().Str("path", ignitionPath).Msg("Installing Ignition config")
+func installIgnition(workdir, ignitionPath string) error {
+	log.Info().Str("path", ignitionPath).Msg("Installing Ignition config")
 	err := exec.Command("cp", ignitionPath, filepath.Join(workdir, "mnt", "oem", "config.ign")).Run()
 	if err != nil {
 		return fmt.Errorf("failed to copy Ignition config: %w", err)

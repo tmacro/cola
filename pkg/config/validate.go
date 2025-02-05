@@ -274,32 +274,32 @@ func validateEtcd(config *ApplianceConfig) error {
 	}
 
 	if config.Etcd.Name == "" {
-		return fmt.Errorf("Etcd.name is required")
+		return fmt.Errorf("etcd.name is required")
 	}
 
 	if config.Etcd.InitialToken == "" {
-		return fmt.Errorf("Etcd.initial_token is required")
+		return fmt.Errorf("etcd.initial_token is required")
 	}
 
 	if config.Etcd.ListenAddress == "" {
-		return fmt.Errorf("Etcd.listen_address is required")
+		return fmt.Errorf("etcd.listen_address is required")
 	}
 
 	if len(config.Etcd.Peers) == 0 {
-		return fmt.Errorf("Etcd.peers is required")
+		return fmt.Errorf("etcd.peers is required")
 	}
 
 	for i, peer := range config.Etcd.Peers {
 		if peer.Name == "" {
-			return fmt.Errorf("Etcd.peer[%d].name is required", i)
+			return fmt.Errorf("etcd.peer[%d].name is required", i)
 		}
 
 		if peer.Address == "" {
-			return fmt.Errorf("Etcd.peer[%d].address is required", i)
+			return fmt.Errorf("etcd.peer[%d].address is required", i)
 		}
 
 		if peer.Port == 0 {
-			return fmt.Errorf("Etcd.peer[%d].port is required", i)
+			return fmt.Errorf("etcd.peer[%d].port is required", i)
 		}
 	}
 
