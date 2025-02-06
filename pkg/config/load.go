@@ -131,33 +131,37 @@ func resolveFilePaths(paths []string, ext string) ([]string, error) {
 	return filePaths, nil
 }
 
-func mergePartialConfigs(base, override PartialConfig) PartialConfig {
-	base.Variables = append(base.Variables, override.Variables...)
-	return base
+type VariablePartial struct {
+	Variables []Variable `hcl:"variable,block"`
+	Remain    hcl.Body   `hcl:",remain"`
 }
 
-func readConfigPartial(paths []string) (*PartialConfig, error) {
-	var merged PartialConfig
+type VariableFile struct {
+	Body hcl.Body `hcl:",remain"`
+}
+
+func readVariableConfig(paths []string) ([]Variable, error) {
+	vars := make([]Variable, 0)
 
 	evalCtx := &hcl.EvalContext{
 		Variables: map[string]cty.Value{
-			"string": cty.StringVal(VariableTypeString),
-			"bool":   cty.StringVal(VariableTypeBool),
-			"number": cty.StringVal(VariableTypeNumber),
+			VariableTypeString: cty.StringVal(VariableTypeString),
+			VariableTypeBool:   cty.StringVal(VariableTypeBool),
+			VariableTypeNumber: cty.StringVal(VariableTypeNumber),
 		},
 	}
 
 	for _, path := range paths {
-		var config PartialConfig
-		err := hclsimple.DecodeFile(path, evalCtx, &config)
+		var partial VariablePartial
+		err := hclsimple.DecodeFile(path, evalCtx, &partial)
 		if err != nil {
 			return nil, ParseError{Err: err, Path: path}
 		}
 
-		merged = mergePartialConfigs(merged, config)
+		vars = append(vars, partial.Variables...)
 	}
 
-	return &merged, nil
+	return vars, nil
 }
 
 func ctyValueToString(v cty.Value) string {
@@ -174,13 +178,13 @@ func ctyValueToString(v cty.Value) string {
 }
 
 func loadVariables(paths, values []string) (map[string]cty.Value, error) {
-	partialConfig, err := readConfigPartial(paths)
+	vars, err := readVariableConfig(paths)
 	if err != nil {
 		return nil, err
 	}
 
 	variableSpec := hcldec.ObjectSpec{}
-	for _, variable := range partialConfig.Variables {
+	for _, variable := range vars {
 		var varType cty.Type
 		switch variable.Type {
 		case VariableTypeString:
@@ -193,7 +197,7 @@ func loadVariables(paths, values []string) (map[string]cty.Value, error) {
 			log.Debug().Str("name", variable.Name).Str("type", "boolean").Msg("Discovered variable")
 			varType = cty.Bool
 		default:
-			return nil, fmt.Errorf("unsupported variable type: %d", variable.Type)
+			return nil, fmt.Errorf("unsupported variable type: %s", variable.Type)
 		}
 
 		variableSpec[variable.Name] = &hcldec.AttrSpec{
@@ -244,7 +248,7 @@ func loadVariables(paths, values []string) (map[string]cty.Value, error) {
 	for k := range variableSpec {
 		_, ok := variables[k]
 		if !ok {
-			return nil, fmt.Errorf("variable %s has no value", k)
+			return nil, fmt.Errorf("variable %s requires a value", k)
 		}
 	}
 
@@ -316,10 +320,10 @@ func ReadConfig(paths, values []string) (*ApplianceConfig, error) {
 
 	evalCtx := &hcl.EvalContext{
 		Variables: map[string]cty.Value{
-			"string": cty.StringVal(VariableTypeString),
-			"bool":   cty.StringVal(VariableTypeBool),
-			"number": cty.StringVal(VariableTypeNumber),
-			"var":    cty.ObjectVal(variables),
+			"var":              cty.ObjectVal(variables),
+			VariableTypeString: cty.StringVal(VariableTypeString),
+			VariableTypeBool:   cty.StringVal(VariableTypeBool),
+			VariableTypeNumber: cty.StringVal(VariableTypeNumber),
 		},
 	}
 

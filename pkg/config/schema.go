@@ -8,15 +8,6 @@ const (
 	VariableTypeBool   string = "boolean"
 )
 
-type PartialConfig struct {
-	Variables []Variable `hcl:"variable,block"`
-	Remain    hcl.Body   `hcl:",remain"`
-}
-
-type VariableFile struct {
-	Body hcl.Body `hcl:",remain"`
-}
-
 type ApplianceConfig struct {
 	System      *System     `hcl:"system,block"`
 	Etcd        *Etcd       `hcl:"etcd,block"`
