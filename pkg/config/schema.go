@@ -37,7 +37,7 @@ type System struct {
 	Timezone           string   `hcl:"timezone,optional"`
 	EnableTTYAutoLogin bool     `hcl:"enable_tty_auto_login,optional"`
 	Updates            *Updates `hcl:"updates,block"`
-	PowerProfile       string   `hcl:"power-profile,optional"`
+	PowerProfile       string   `hcl:"power_profile,optional"`
 }
 
 type Updates struct {
@@ -147,8 +147,8 @@ type Etcd struct {
 	Name          string `hcl:"name"`
 	Server        bool   `hcl:"server,optional"`
 	Gateway       bool   `hcl:"gateway,optional"`
-	ListenAddress string `hcl:"listen-address,optional"`
-	InitialToken  string `hcl:"initial-token,optional"`
+	ListenAddress string `hcl:"listen_address,optional"`
+	InitialToken  string `hcl:"initial_token,optional"`
 	Peers         []Peer `hcl:"peer,block"`
 }
 
