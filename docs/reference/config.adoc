@@ -5,17 +5,18 @@
 
 The following blocks are supported in the machine configuration file:
 
-- <<_system,system>>
-- <<_user,user>>
-- <<_extension,extension>>
-- <<_container,container>>
-- <<_file,file>>
-- <<_directory,directory>>
-- <<_symlink,symlink>>
-- <<_mount,mount>>
-- <<_interface,interface>>
-- <<_service,service>>
-- <<_etcd,etcd>>
+- <<_system,System>>
+- <<_user,User>>
+- <<_extension,Extension>>
+- <<_container,Container>>
+- <<_file,File>>
+- <<_directory,Directory>>
+- <<_symlink,Symlink>>
+- <<_mount,Mount>>
+- <<_interface,Interface>>
+- <<_service,Service>>
+- <<_etcd,Etcd>>
+- <<_variable,Variable>>
 
 == System
 
@@ -393,5 +394,47 @@ etcd {
     address = "10.0.0.7"
     port = 2380
   }
+}
+----
+
+== variable
+
+The `variable` block is used to define variables that can be referenced in other blocks.
+
+Keys:
+- `name` (string): The name of the variable.
+- `type` (type): The type of the variable (e.g., `string`, `number`, `boolean`).
+
+You must specify the variable `name` as the block label.
+
+Example:
+
+[source,hcl]
+----
+variable "myvar" {
+  type = string
+}
+----
+
+[source,hcl]
+----
+variable "myvar" {
+  type = number
+}
+----
+
+Variables can be referenced using the `${var.myvar}` syntax.
+
+Example:
+
+[source,hcl]
+----
+file "/etc/myconfig.conf" {
+  owner = "root"
+  group = "root"
+  mode  = "0644"
+  inline = <<-EOF
+    myvar = "${var.myvar}"
+  EOF
 }
 ----

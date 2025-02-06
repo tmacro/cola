@@ -1,4 +1,5 @@
 = Reference
+:source-highlighter: rouge
 
 :leveloffset: +1
 
