@@ -5,7 +5,7 @@ import "github.com/hashicorp/hcl/v2"
 const (
 	VariableTypeString string = "string"
 	VariableTypeNumber string = "number"
-	VariableTypeBool   string = "boolean"
+	VariableTypeBool   string = "bool"
 )
 
 type ApplianceConfig struct {
