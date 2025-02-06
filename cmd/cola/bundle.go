@@ -55,6 +55,11 @@ func (cmd *BundleCmd) Run() error {
 		log.Fatal().Err(err).Msg("failed to fetch extensions")
 	}
 
+	err = fetchExtensionTransferConfigs(workdir, cmd.ExtensionDir, cfg)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to fetch extension transfer configs")
+	}
+
 	cleanupMounts, err := mountImage(imagePath, filepath.Join(workdir, "mnt"))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to mount image")
@@ -163,18 +168,28 @@ func fetchExtensions(workdir, extdir string, cfg *config.ApplianceConfig) error 
 	for _, ext := range cfg.Extensions {
 		extFilename := ignition.FormatExtensionName(ext.Name, ext.Version, ext.Arch) + ".raw"
 		extDestPath := filepath.Join(workdir, extFilename)
-		transferCfgDestPath := filepath.Join(workdir, ext.Name+".conf")
 
 		extPath := ""
-		transferCfgPath := ""
 		if extdir != "" {
 			extPath = filepath.Join(extdir, extFilename)
-			transferCfgPath = filepath.Join(extdir, ext.Name+".conf")
 		}
 
 		extUrl := ignition.FormatExtensionURL(ext.BakeryUrl, ext.Name, ext.Version, ext.Arch)
 		if err := copyOrDownload(extPath, extUrl, extDestPath); err != nil {
 			return fmt.Errorf("failed to download extension: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func fetchExtensionTransferConfigs(workdir, extdir string, cfg *config.ApplianceConfig) error {
+	for _, ext := range cfg.Extensions {
+		transferCfgDestPath := filepath.Join(workdir, ext.Name+".conf")
+
+		transferCfgPath := ""
+		if extdir != "" {
+			transferCfgPath = filepath.Join(extdir, ext.Name+".conf")
 		}
 
 		transferCfgUrl := ignition.FormatExtensionTransferConfigURL(ext.BakeryUrl, ext.Name)

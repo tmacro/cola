@@ -36,11 +36,19 @@ func (cmd *GenerateCmd) Run() error {
 
 	opts := []ignition.GeneratorOpt{}
 	if cmd.BundledExtensions {
-		opts = append(opts, ignition.WithBundledExtensions())
-	}
+		workdir, err := os.MkdirTemp("", "cola-generate")
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to create temporary directory")
+		}
 
-	if cmd.ExtensionDir != "" {
-		opts = append(opts, ignition.WithExtensionDir(cmd.ExtensionDir))
+		defer os.RemoveAll(workdir)
+
+		err = fetchExtensionTransferConfigs(workdir, cmd.ExtensionDir, cfg)
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to fetch extension transfer configs")
+		}
+
+		opts = append(opts, ignition.WithBundledExtensions(), ignition.WithExtensionDir(workdir))
 	}
 
 	ignJson, err := ignition.Generate(cfg, opts...)
