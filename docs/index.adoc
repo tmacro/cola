@@ -1,6 +1,8 @@
 = COLA Documentation
 :source-highlighter: rouge
+:rouge-style: igorpro
 :toc: left
+:toclevels: 4
 :stylesheet: stylesheet.css
 :leveloffset: +1
 

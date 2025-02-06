@@ -51,4 +51,5 @@ snapshot: $(GORELEASER)
 .PHONY: docs
 docs:
 	@mkdir -p dist/docs
-	@docker run -v $(PWD):/documents/ asciidoctor/docker-asciidoctor:latest asciidoctor -o dist/docs/index.html -r asciidoctor-diagram docs/index.adoc
+	@docker build -t cola-docs-builder:local ./docs/
+	@docker run -v $(PWD):/documents/ cola-docs-builder:local asciidoctor-multipage -r asciidoctor-multipage -D dist/docs/ docs/index.adoc

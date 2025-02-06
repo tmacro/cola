@@ -1,6 +1,6 @@
 FROM asciidoctor/docker-asciidoctor:latest
 
-RUN gem install asciidoctor-copy-code
+RUN gem install asciidoctor-multipage
 
 WORKDIR /documents
 

@@ -1,24 +1,6 @@
-= Configuration Syntax
-:toc: left
+= Supported blocks
 
-== Supported blocks
-
-The following blocks are supported in the machine configuration file:
-
-- <<_system,System>>
-- <<_user,User>>
-- <<_extension,Extension>>
-- <<_container,Container>>
-- <<_file,File>>
-- <<_directory,Directory>>
-- <<_symlink,Symlink>>
-- <<_mount,Mount>>
-- <<_interface,Interface>>
-- <<_service,Service>>
-- <<_etcd,Etcd>>
-- <<_variable,Variable>>
-
-== System
+== system
 
 The `system` block is used to configure system-wide settings. It can contain the following keys:
 
@@ -53,9 +35,7 @@ The `system` block is used to configure system-wide settings. It can contain the
 
 |===
 
-=== Sub-blocks
-
-==== Updates
+=== updates
 
 [cols="1,1,1,5"]
 |===
@@ -83,7 +63,7 @@ system {
 }
 ----
 
-== User
+== user
 
 The `user` block is used to configure user accounts.
 
@@ -140,7 +120,7 @@ user "alice" {
 }
 ----
 
-== Extension
+== extension
 
 The `extension` block is used to configure Systemd sysext extensions.
 You must specify the `name` as the block label.
@@ -177,7 +157,7 @@ extension "consul" {
 }
 ----
 
-== Container
+== container
 
 The `container` block is used to configure containers.
 You must specify the `name` as the block label.
@@ -227,9 +207,7 @@ container "nginx" {
 }
 ----
 
-=== Sub-blocks
-
-==== Volume
+=== volume
 
 The `volume` sub-block is used to configure container volumes.
 You must specify the target mount path as the block label.
@@ -257,7 +235,7 @@ container "myapp" {
 }
 ----
 
-== File
+== file
 
 The `file` block is used to manage the creation or modification of files.
 You must specify the `path` as the block label.
@@ -325,7 +303,7 @@ file "/etc/myconfig.conf" {
 }
 ----
 
-== Directory
+== directory
 
 The `directory` block is used to manage directories on the system.
 You must specify the `path` as the block label.
@@ -372,7 +350,7 @@ directory "/var/log/myapp" {
 }
 ----
 
-== Symlink
+== symlink
 
 The `symlink` block is used to create symbolic links.
 You must specify the link `path` as the block label.
@@ -414,7 +392,7 @@ symlink "/usr/bin/myapp" {
 }
 ----
 
-== Mount
+== mount
 
 The `mount` block is used to configure file system mounts.
 You must specify the `mount_point` as the block label.
@@ -456,7 +434,7 @@ mount "/data" {
 }
 ----
 
-== Interface
+== interface
 
 The `interface` block is used to configure network interfaces.
 
@@ -527,9 +505,7 @@ interface {
 }
 ----
 
-=== Sub-blocks
-
-==== Vlan
+=== vlan
 
 The `vlan` sub-block is used to define VLANs on top of an interface.
 You must specify the VLAN `name` as the block label.
@@ -565,7 +541,7 @@ You must specify the VLAN `name` as the block label.
 |===
 
 
-== Service
+== service
 
 The `service` block is used to configure systemd services.
 You must specify the service `name` as the block label.
@@ -617,9 +593,7 @@ service "myapp" {
 }
 ----
 
-=== Sub-blocks
-
-==== Drop_in
+=== drop_in
 
 The `drop_in` sub-block is used to define systemd drop-in files for a service.
 You must specify the drop-in `name` as the block label.
@@ -639,7 +613,7 @@ You must specify the drop-in `name` as the block label.
 |A path to a local file containing the drop-in configuration.
 |===
 
-== Etcd
+== etcd
 
 The `etcd` block is used to configure the integrated etcd service.
 Both servers and gateways require at least one `peer` block to be defined.
@@ -674,9 +648,7 @@ Both servers and gateways require at least one `peer` block to be defined.
 |The initial cluster token.
 |===
 
-=== Sub-blocks
-
-==== Peer
+=== peer
 
 The `peer` sub-block is used to configure etcd cluster peers.
 
@@ -722,7 +694,7 @@ etcd {
 }
 ----
 
-== Variable
+== variable
 
 The `variable` block is used to define variables that can be referenced in other blocks.
 You must specify the variable `name` as the block label.
