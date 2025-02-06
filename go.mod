@@ -1,6 +1,6 @@
 module github.com/tmacro/cola
 
-go 1.23.3
+go 1.23.4
 
 require (
 	github.com/alecthomas/kong v0.9.0
