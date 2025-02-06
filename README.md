@@ -36,11 +36,12 @@ extension "tailscale" {
 
 ## Installation
 
-1. **Download** a release from the [GitHub Releases](https://github.com/username/cola/releases) page (if available), or **build from source**:
+**Download** a release from the [GitHub Releases](https://github.com/tmacro/cola/releases) page, or **build from source**:
    ```bash
-   go install github.com/username/cola@latest
+   go install github.com/tmacro/cola/cmd/cola@latest
    ```
-2. Confirm it’s installed:
+
+Confirm it’s installed:
    ```bash
    cola --help
    ```
