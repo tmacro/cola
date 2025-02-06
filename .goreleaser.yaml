@@ -26,8 +26,7 @@ archives:
     name_template: >-
       {{ .Binary }}-
       {{- .Version }}-
-      {{- if eq .Arch "amd64" }}
-      {{- else if eq .Arch "386" }}i386
+      {{- if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
