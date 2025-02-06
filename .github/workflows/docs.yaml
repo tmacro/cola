@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - main
+      - trunk
   workflow_dispatch:
 
 name: Publish Documentation
