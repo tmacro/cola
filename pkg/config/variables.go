@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hcldec"
@@ -157,21 +158,27 @@ func readVariables(paths []string, spec hcldec.ObjectSpec, defaults map[string]c
 		}
 	}
 
+	missing := make([]string, 0)
 	for k := range spec {
 		_, ok := variables[k]
 		if !ok {
 			defaultVal, ok := defaults[k]
-			if ok {
-				variables[k] = defaultVal
-				log.Debug().
-					Str("name", k).
-					Str("value", ctyValueToString(defaultVal)).
-					Msg("Using default value for variable")
+			if !ok {
+				missing = append(missing, k)
 				continue
 			}
 
-			return nil, fmt.Errorf("variable %s requires a value", k)
+			variables[k] = defaultVal
+			log.Debug().
+				Str("name", k).
+				Str("value", ctyValueToString(defaultVal)).
+				Msg("Using default value for variable")
+
 		}
+	}
+
+	if len(missing) > 0 {
+		return nil, fmt.Errorf("missing values for required variables: %s", strings.Join(missing, ", "))
 	}
 
 	return variables, nil
