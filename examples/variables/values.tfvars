@@ -1,3 +1,3 @@
-hostname = "42"
-timezone = "PST"
+hostname = "example.com"
+# timezone = "PST"
 num_hosts = 42

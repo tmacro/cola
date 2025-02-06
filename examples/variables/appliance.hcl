@@ -8,6 +8,7 @@ variable "hostname" {
 
 variable "timezone" {
   type = string
+  default = "UTC"
 }
 
 variable "num_hosts" {

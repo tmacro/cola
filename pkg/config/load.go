@@ -6,10 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/hcl/v2/hclsimple"
-	"github.com/rs/zerolog/log"
-	"github.com/zclconf/go-cty/cty"
 )
 
 var (
@@ -131,130 +128,6 @@ func resolveFilePaths(paths []string, ext string) ([]string, error) {
 	return filePaths, nil
 }
 
-type VariablePartial struct {
-	Variables []Variable `hcl:"variable,block"`
-	Remain    hcl.Body   `hcl:",remain"`
-}
-
-type VariableFile struct {
-	Body hcl.Body `hcl:",remain"`
-}
-
-func readVariableConfig(paths []string) ([]Variable, error) {
-	vars := make([]Variable, 0)
-
-	evalCtx := &hcl.EvalContext{
-		Variables: map[string]cty.Value{
-			VariableTypeString: cty.StringVal(VariableTypeString),
-			VariableTypeBool:   cty.StringVal(VariableTypeBool),
-			VariableTypeNumber: cty.StringVal(VariableTypeNumber),
-		},
-	}
-
-	for _, path := range paths {
-		var partial VariablePartial
-		err := hclsimple.DecodeFile(path, evalCtx, &partial)
-		if err != nil {
-			return nil, ParseError{Err: err, Path: path}
-		}
-
-		vars = append(vars, partial.Variables...)
-	}
-
-	return vars, nil
-}
-
-func ctyValueToString(v cty.Value) string {
-	switch v.Type() {
-	case cty.String:
-		return v.AsString()
-	case cty.Number:
-		return v.AsBigFloat().String()
-	case cty.Bool:
-		return fmt.Sprintf("%t", v.True())
-	default:
-		return "<unknown>"
-	}
-}
-
-func loadVariables(paths, values []string) (map[string]cty.Value, error) {
-	vars, err := readVariableConfig(paths)
-	if err != nil {
-		return nil, err
-	}
-
-	variableSpec := hcldec.ObjectSpec{}
-	for _, variable := range vars {
-		var varType cty.Type
-		switch variable.Type {
-		case VariableTypeString:
-			log.Debug().Str("name", variable.Name).Str("type", "string").Msg("Discovered variable")
-			varType = cty.String
-		case VariableTypeNumber:
-			log.Debug().Str("name", variable.Name).Str("type", "number").Msg("Discovered variable")
-			varType = cty.Number
-		case VariableTypeBool:
-			log.Debug().Str("name", variable.Name).Str("type", "boolean").Msg("Discovered variable")
-			varType = cty.Bool
-		default:
-			return nil, fmt.Errorf("unsupported variable type: %s", variable.Type)
-		}
-
-		variableSpec[variable.Name] = &hcldec.AttrSpec{
-			Name:     variable.Name,
-			Type:     varType,
-			Required: false,
-		}
-	}
-
-	variables := make(map[string]cty.Value)
-	for _, valuePath := range values {
-		data, err := os.ReadFile(valuePath)
-		if err != nil {
-			return nil, err
-		}
-
-		var value VariableFile
-		err = hclsimple.Decode("variable.hcl", data, nil, &value)
-		if err != nil {
-			return nil, ParseError{Err: err, Path: valuePath}
-		}
-
-		val, diags := hcldec.Decode(value.Body, variableSpec, nil)
-		if diags.HasErrors() {
-			return nil, diags
-		}
-
-		for k, v := range val.AsValueMap() {
-			if v.IsNull() {
-				continue
-			}
-
-			log.Debug().
-				Str("name", k).
-				Str("value", ctyValueToString(v)).
-				Str("file", filepath.Base(valuePath)).
-				Msg("Loaded value for variable")
-
-			_, ok := variables[k]
-			if ok {
-				return nil, fmt.Errorf("variable %s already defined", k)
-			}
-
-			variables[k] = v
-		}
-	}
-
-	for k := range variableSpec {
-		_, ok := variables[k]
-		if !ok {
-			return nil, fmt.Errorf("variable %s requires a value", k)
-		}
-	}
-
-	return variables, nil
-}
-
 func readConfigFile(path string, evalCtx *hcl.EvalContext) (*ApplianceConfig, error) {
 	var config ApplianceConfig
 	err := hclsimple.DecodeFile(path, evalCtx, &config)
@@ -318,14 +191,7 @@ func ReadConfig(paths, values []string) (*ApplianceConfig, error) {
 		return nil, err
 	}
 
-	evalCtx := &hcl.EvalContext{
-		Variables: map[string]cty.Value{
-			"var":              cty.ObjectVal(variables),
-			VariableTypeString: cty.StringVal(VariableTypeString),
-			VariableTypeBool:   cty.StringVal(VariableTypeBool),
-			VariableTypeNumber: cty.StringVal(VariableTypeNumber),
-		},
-	}
+	evalCtx := buildEvalContext(variables)
 
 	var merged *ApplianceConfig
 	for _, cPath := range configPaths {
