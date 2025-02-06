@@ -22,20 +22,50 @@ The following blocks are supported in the machine configuration file:
 
 The `system` block is used to configure system-wide settings. It can contain the following keys:
 
-- `hostname` (string): The hostname of the machine.
-- `timezone` (string, optional): The timezone of the machine (e.g., `"UTC"`, `"America/New_York"`).
-- `enable_tty_auto_login` (bool, optional): Enable automatic login on the console.
-- `power-profile` (string, optional): The power profile to use (e.g., `"performance"`, `"ondemand"`, `"powersave"`).
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
 
-Sub-blocks:
+|hostname
+|string
+|Yes
+|The hostname of the machine.
 
-=== updates
+|timezone
+|string
+|No
+|The timezone of the machine (e.g., `"UTC"`, `"America/New_York"`).
 
-The `updates` sub-block is used to configure the Flatcar OS update settings.
+|enable_tty_auto_login
+|bool
+|No
+|Enable automatic login on the console.
 
-Keys:
+|power_profile
+|string
+|No
+|The power profile to use (e.g., `"performance"`, `"ondemand"`, `"powersave"`).
 
-- `reboot-strategy` (string): The reboot strategy for updates (one of: `"off"`, `"reboot"`, `"etcd-lock"`).
+|updates
+|sub-block
+|No
+|The `updates` sub-block configures Flatcar OS update settings.
+
+|===
+
+=== Sub-blocks
+
+==== Updates
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|reboot_strategy
+|string
+|No
+|The reboot strategy for updates (one of: `"off"`, `"reboot"`, `"etcd-lock"`).
+|===
 
 Example:
 
@@ -45,26 +75,54 @@ system {
   hostname = "cola"
   timezone = "UTC"
   enable_tty_auto_login = true
-  power-profile = "performance"
+  power_profile = "performance"
 
   updates {
-    reboot-strategy = "reboot"
+    reboot_strategy = "reboot"
   }
 }
 ----
 
 == User
 
-The `user` block is used to configure user accounts. It contains the following keys:
+The `user` block is used to configure user accounts.
 
-- `uid` (int, optional): The user ID.
-- `groups` (array of strings, optional): The groups the user belongs to.
-- `shell` (string, optional): The user's shell.
-- `home_dir` (string, optional): The user's home directory.
-- `no_create_home` (bool, optional): Do not create the user's home directory.
-- `ssh_authorized_keys` (array of strings, optional): The user's SSH authorized keys.
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
 
-You must specify the `username` as the block label.
+|uid
+|int
+|No
+|The user ID.
+
+|groups
+|list(string)
+|No
+|The groups the user belongs to.
+
+|shell
+|string
+|No
+|The user's shell.
+
+|home_dir
+|string
+|No
+|The user's home directory.
+
+|no_create_home
+|bool
+|No
+|Do not create the user's home directory.
+
+|ssh_authorized_keys
+|list(string)
+|No
+|The user's SSH authorized keys.
+|===
+
+You the username is specified using the block label.
 
 Example:
 
@@ -84,13 +142,29 @@ user "alice" {
 
 == Extension
 
-The `extension` block is used to configure Systemd sysext extensions. It contains the following keys:
-
-- `version` (string): The version of the extension.
-- `arch` (string, optional): The architecture of the extension (e.g., `"x86_64"`, `"arm64"`).
-- `bakery_url` (string): The URL of the extension's bakery.
-
+The `extension` block is used to configure Systemd sysext extensions.
 You must specify the `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|version
+|string
+|Yes
+|The version of the extension.
+
+|arch
+|string
+|No
+|The architecture of the extension (e.g., `"x86_64"`, `"arm64"`).
+
+|bakery_url
+|string
+|Yes
+|The URL of the extension's bakery.
+|===
+
 
 Example:
 
@@ -105,15 +179,38 @@ extension "consul" {
 
 == Container
 
-The `container` block is used to configure containers. It contains the following keys:
-
-- `image` (string): The container image.
-- `args` (array of strings, optional): The arguments to pass to the container.
-- `restart` (string, optional): The container restart policy (e.g., `"always"`, `"on-failure"`).
-- `cap_add` (array of strings, optional): Additional Linux capabilities to add to the container.
-- `volume` (sub-block, optional): One or more `volume` sub-blocks that configure container volumes.
-
+The `container` block is used to configure containers.
 You must specify the `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|image
+|string
+|Yes
+|The container image.
+
+|args
+|list(string)
+|No
+|The arguments to pass to the container.
+
+|restart
+|string
+|No
+|The container restart policy (e.g., `"always"`, `"on-failure"`).
+
+|cap_add
+|list(string)
+|No
+|Additional Linux capabilities to add to the container.
+
+|volume
+|sub-block
+|No
+|One or more `volume` sub-blocks that configure container volumes.
+|===
 
 Example:
 
@@ -130,13 +227,22 @@ container "nginx" {
 }
 ----
 
-=== Volume
+=== Sub-blocks
 
-The `volume` sub-block is used to configure container volumes. It contains the following keys:
+==== Volume
 
-- `source` (string): The path on the host that is mounted into the container.
-
+The `volume` sub-block is used to configure container volumes.
 You must specify the target mount path as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|source
+|string
+|Yes
+|The path on the host that is mounted into the container.
+|===
 
 Example:
 
@@ -153,17 +259,48 @@ container "myapp" {
 
 == File
 
-The `file` block is used to manage the creation or modification of files. It contains the following keys:
-
-- `owner` (string, optional): The file owner.
-- `group` (string, optional): The file group.
-- `mode` (string): The file permissions (e.g., `"0644"`).
-- `inline` (string, optional): File contents provided inline.
-- `source_path` (string, optional): Path to a local file whose contents should be used.
-- `url` (string, optional): Remote URL whose contents should be fetched and used.
-- `overwrite` (bool, optional): Overwrite the file if it already exists (default is `false`).
-
+The `file` block is used to manage the creation or modification of files.
 You must specify the `path` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|owner
+|string
+|No
+|The file owner.
+
+|group
+|string
+|No
+|The file group.
+
+|mode
+|string
+|Yes
+|The file permissions.
+
+|inline
+|string
+|No
+|The file contents provided inline.
+
+|source_path
+|string
+|No
+|Path to a local file whose contents should be used.
+
+|url
+|string
+|No
+|Remote URL whose contents should be fetched and used.
+
+|overwrite
+|bool
+|No
+|Overwrite the file if it already exists.
+|===
 
 Example:
 
@@ -190,13 +327,39 @@ file "/etc/myconfig.conf" {
 
 == Directory
 
-The `directory` block is used to manage directories on the system. It contains the following keys:
-
-- `owner` (string, optional): The directory owner.
-- `group` (string, optional): The directory group.
-- `mode` (string): The directory permissions (e.g., `"0755"`).
-
+The `directory` block is used to manage directories on the system.
 You must specify the `path` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|owner
+|string
+|No
+|The directory owner.
+
+|group
+|string
+|No
+|The directory group.
+
+|mode
+|string
+|Yes
+|The directory permissions.
+
+|overwrite
+|bool
+|No
+|Overwrite the directory if it already exists.
+
+|recursive
+|bool
+|No
+|Create parent directories if they do not exist.
+|===
+
 
 Example:
 
@@ -211,14 +374,33 @@ directory "/var/log/myapp" {
 
 == Symlink
 
-The `symlink` block is used to create symbolic links. It contains the following keys:
-
-- `target` (string): The file or directory the symlink should point to.
-- `owner` (string, optional): The symlink owner.
-- `group` (string, optional): The symlink group.
-- `overwrite` (bool, optional): Overwrite the symlink if it already exists (default is `false`).
-
+The `symlink` block is used to create symbolic links.
 You must specify the link `path` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|target
+|string
+|Yes
+|The file or directory the symlink should point to.
+
+|owner
+|string
+|No
+|The symlink owner.
+
+|group
+|string
+|No
+|The symlink group.
+
+|overwrite
+|bool
+|No
+|Overwrite the symlink if it already exists.
+|===
 
 Example:
 
@@ -234,14 +416,33 @@ symlink "/usr/bin/myapp" {
 
 == Mount
 
-The `mount` block is used to configure file system mounts. It contains the following keys:
-
-- `type` (string): The filesystem type (e.g., `"ext4"`, `"nfs"`, `"tmpfs"`).
-- `what` (string): The source device or remote path.
-- `where` (string): Where to mount in the filesystem (mount target).
-- `options` (string, optional): Additional mount options (comma-separated).
-
+The `mount` block is used to configure file system mounts.
 You must specify the `mount_point` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|type
+|string
+|Yes
+|The filesystem type (e.g., `"ext4"`, `"nfs"`, `"tmpfs"`).
+
+|what
+|string
+|Yes
+|The source device or remote path.
+
+|where
+|string
+|Yes
+|Where to mount in the filesystem (mount target).
+
+|options
+|string
+|No
+|Additional mount options (comma-separated).
+|===
 
 Example:
 
@@ -257,16 +458,52 @@ mount "/data" {
 
 == Interface
 
-The `interface` block is used to configure network interfaces. It contains the following keys:
+The `interface` block is used to configure network interfaces.
 
-- `name` (string, optional): The interface name (e.g., `"eth0"`).
-- `mac_address` (string, optional): The desired MAC address for the interface.
-- `gateway` (string, optional): The default gateway.
-- `address` (string, optional): The IPv4 or IPv6 address with CIDR (e.g., `"192.168.1.10/24"`).
-- `addresses` (array of strings, optional): An array of IPv4 or IPv6 addresses with CIDR. Mutually exclusive with `address`.
-- `dns` (string, optional): DNS nameserver address (e.g., `"8.8.8.8"`).
-- `dhcp` (bool, optional): Whether to enable DHCP on this interface.
-- `vlan` (sub-block, optional): One or more VLAN sub-blocks for VLAN configuration.
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|name
+|string
+|No
+|The interface name (e.g., `"eth0"`).
+
+|mac_address
+|string
+|No
+|The desired MAC address for the interface.
+
+|gateway
+|string
+|No
+|The default gateway.
+
+|address
+|string
+|No
+|The IPv4 or IPv6 address with CIDR (e.g., `"192.168.1.10/24"`).
+
+|addresses
+|list(string)
+|No
+|An array of IPv4 or IPv6 addresses with CIDR. Mutually exclusive with `address`.
+
+|dns
+|string
+|No
+|DNS nameserver address (e.g., `"8.8.8.8"`).
+
+|dhcp
+|bool
+|No
+|Whether to enable DHCP on this interface.
+
+|vlan
+|sub-block
+|No
+|One or more `vlan` sub-blocks for VLAN configuration.
+|===
 
 Example:
 
@@ -290,27 +527,68 @@ interface {
 }
 ----
 
-=== Vlan
+=== Sub-blocks
 
-The `vlan` sub-block is used to define VLANs on top of an interface. It contains the following keys:
+==== Vlan
 
-- `id` (int): VLAN ID number.
-- `address` (string, optional): The VLAN's address with CIDR notation.
-- `gateway` (string, optional): The VLAN's default gateway.
-- `dns` (string, optional): The VLAN's DNS server.
-- `dhcp` (bool, optional): Whether to enable DHCP on this VLAN.
-
+The `vlan` sub-block is used to define VLANs on top of an interface.
 You must specify the VLAN `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|id
+|int
+|Yes
+|The VLAN ID number.
+
+|address
+|string
+|No
+|The VLAN's address with CIDR notation.
+
+|gateway
+|string
+|No
+|The VLAN's default gateway.
+
+|dns
+|string
+|No
+|The VLAN's DNS server.
+
+|dhcp
+|bool
+|No
+|Whether to enable DHCP on this VLAN.
+|===
+
 
 == Service
 
-The `service` block is used to configure systemd services. It contains the following keys:
-
-- `inline` (string, optional): The full systemd unit file content provided inline.
-- `source_path` (string, optional): A path to a local file containing the systemd unit file.
-- `enabled` (bool, optional): Whether to enable (and start) the service.
-
+The `service` block is used to configure systemd services.
 You must specify the service `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|inline
+|string
+|No
+|The full systemd unit file content provided inline.
+
+|source_path
+|string
+|No
+|A path to a local file containing the systemd unit file.
+
+|enabled
+|bool
+|No
+|Whether to enable (and start) the service.
+|===
 
 Example:
 
@@ -339,41 +617,88 @@ service "myapp" {
 }
 ----
 
-=== Drop_in
+=== Sub-blocks
 
-The `drop_in` sub-block is used to define systemd drop-in files for a service. It contains the following keys:
+==== Drop_in
 
-- `inline` (string, optional): The contents of the drop-in file provided inline.
-- `source_path` (string, optional): A path to a local file containing the drop-in configuration.
-
+The `drop_in` sub-block is used to define systemd drop-in files for a service.
 You must specify the drop-in `name` as the block label.
 
-Use the examples as a guide to configure your own machine settings. All blocks are optional unless otherwise specified, but you must supply at least one of the recognized blocks (`system`, `user`, `extension`, `container`, `file`, `directory`, `symlink`, `mount`, `interface`, `service`) to have a valid configuration.
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
 
-== etcd
+|inline
+|string
+|No
+|The contents of the drop-in file provided inline.
+
+|source_path
+|string
+|No
+|A path to a local file containing the drop-in configuration.
+|===
+
+== Etcd
 
 The `etcd` block is used to configure the integrated etcd service.
 Both servers and gateways require at least one `peer` block to be defined.
 
-Keys:
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
 
-- `name` (string): The name of the etcd member.
-- `server` (bool, optional): Whether this member is a server (default is `false`).
-- `gateway` (bool, optional): Whether this member is a gateway (default is `false`).
-- `listen-address` (string): The listen address for the etcd member. Only required for servers.
-- `initial-token` (string): The initial cluster token. Only required for servers.
+|name
+|string
+|Yes
+|The name of the etcd member.
 
-Sub-blocks:
+|server
+|bool
+|No
+|Whether this member is a server.
 
-=== peer
+|gateway
+|bool
+|No
+|Whether this member is a gateway.
+
+|listen_address
+|string
+|Yes (for servers)
+|The listen address for the etcd member.
+
+|initial_token
+|string
+|Yes (for servers)
+|The initial cluster token.
+|===
+
+=== Sub-blocks
+
+==== Peer
 
 The `peer` sub-block is used to configure etcd cluster peers.
 
-Keys:
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
 
-- `name` (string): The name of the peer.
-- `address` (string): The peer address.
-- `port` (int): The peer port.
+|name
+|string
+|Yes
+|The name of the peer.
+
+|address
+|string
+|Yes
+|The peer address.
+
+|port
+|int
+|Yes
+|The peer port.
+|===
 
 Example:
 
@@ -382,8 +707,8 @@ Example:
 etcd {
   name = "etcd1"
   server = true
-  listen-address = "10.0.0.5"
-  initial-token = "etcd-cluster-1"
+  listen_address = "10.0.0.5"
+  initial_token = "etcd-cluster-1"
 
   peer "etcd2" {
     address = "10.0.0.6"
@@ -397,15 +722,25 @@ etcd {
 }
 ----
 
-== variable
+== Variable
 
 The `variable` block is used to define variables that can be referenced in other blocks.
-
-Keys:
-- `name` (string): The name of the variable.
-- `type` (type): The type of the variable (e.g., `string`, `number`, `boolean`).
-
 You must specify the variable `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|name
+|string
+|Yes
+|The name of the variable.
+
+|type
+|type
+|Yes
+|The type of the variable. (e.g., `string`, `number`, `boolean`).
+|===
 
 Example:
 
