@@ -1,0 +1,65 @@
+= variable
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, variable
+
+The `variable` block is used to define variables that can be referenced in other blocks.
+You must specify the variable `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|name
+|string
+|Yes
+|The name of the variable.
+
+|type
+|type
+|Yes
+|The type of the variable. (e.g., `string`, `number`, `boolean`).
+|===
+
+Example:
+
+[source,hcl]
+----
+variable "mystringvar" {
+  type = string
+}
+----
+
+[source,hcl]
+----
+variable "mynumvar" {
+  type = number
+}
+----
+
+Outside of templates, variables can be referenced using the `var.myvar` syntax.
+Inside templates, variables can be referenced using `${var.myvar}`.
+
+Example:
+
+[source,hcl]
+----
+
+variable "file_owner" {
+  type = string
+}
+
+variable "myvar" {
+  type = string
+}
+
+file "/etc/myconfig.conf" {
+  owner = var.file_owner
+  group = var.file_owner
+  mode  = "0644"
+  inline = <<-EOF
+    myvar = "${var.myvar}"
+  EOF
+}
+----

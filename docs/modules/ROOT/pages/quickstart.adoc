@@ -1,0 +1,102 @@
+= Quickstart
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, system
+
+== Installation
+
+*Download* a release from the https://github.com/tmacro/cola/releases[GitHub Releases] page, or *build from source*:
+
+[source,bash]
+----
+go install github.com/tmacro/cola/cmd/cola@latest
+----
+
+Confirm it’s installed:
+
+[source,bash]
+----
+cola --help
+----
+
+You should see usage information for *cola*.
+
+== Create a machine definition
+
+[source,hcl]
+----
+# machine.hcl
+system {
+  hostname = "my-machine"
+}
+
+user "nginx" {
+  no_create_home = true
+  shell = "/bin/nologin"
+}
+
+container "nginx" {
+  image = "nginx:latest"
+
+  volume "/usr/share/nginx/html" {
+    source = "/var/www"
+  }
+}
+
+file "/var/www/index.html" {
+  owner = "nginx"
+  group = "nginx"
+  mode = "0644"
+  inline = <<-EOF
+    <html>
+      <head>
+        <title>Hello, World!</title>
+      </head>
+      <body>
+        <h1>Hello, World!</h1>
+      </body>
+    </html>
+  EOF
+}
+----
+
+== Generate Ignition config
+
+Generate an Ignition config from the machine definition:
+[source,bash]
+----
+cola generate \
+  --config=machine.hcl \
+  --output=machine.ign.json
+----
+
+== Bundle Ignition config with Flatcar Linux image
+
+Download a Flatcar Linux image from the https://www.flatcar.org/releases[Flatcar Container Linux releases] page.
+
+[source,bash]
+----
+wget https://stable.flatcar-linux.net/amd64-usr/current/flatcar_production_image.bin.bz2
+bunzip2 flatcar_production_image.bin.bz2
+----
+
+Bundle the Ignition config with the Flatcar Linux image:
+[source,bash]
+----
+cola bundle \
+  --image=flatcar_production_image.bin \
+  --config=machine.hcl \
+  --output=bundled-flatcar.img \
+  --ignition=machine.ign.json
+----
+
+Ignition config can also be generated and bundled with the image in a single command:
+[source,bash]
+----
+cola bundle \
+  --image=flatcar_production_image.bin \
+  --config=machine.hcl \
+  --output=bundled-flatcar.img
+  --gen-ignition
+----

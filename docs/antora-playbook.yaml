@@ -1,0 +1,23 @@
+site:
+  title: COLA Documentation
+  start_page: cola::quickstart.adoc
+
+content:
+  sources:
+  - url: ../
+    branches: HEAD
+    start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+
+  supplemental_files:
+    - path: partials/header-content.hbs
+      contents: ./ui/partials/header-content.hbs
+
+    # - path: partials/header-scripts.hbs
+    #   contents: ./ui/partials/header-scripts.hbs
+
+    - path: js/vendor/highlight.js
+      contents: ./ui/vendor/highlight.js

@@ -1,0 +1,45 @@
+= symlink
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, symlink
+
+The `symlink` block is used to create symbolic links.
+You must specify the link `path` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|target
+|string
+|Yes
+|The file or directory the symlink should point to.
+
+|owner
+|string
+|No
+|The symlink owner.
+
+|group
+|string
+|No
+|The symlink group.
+
+|overwrite
+|bool
+|No
+|Overwrite the symlink if it already exists.
+|===
+
+Example:
+
+[source,hcl]
+----
+symlink "/usr/bin/myapp" {
+  target    = "/opt/myapp/myapp"
+  owner     = "root"
+  group     = "root"
+  overwrite = true
+}
+----

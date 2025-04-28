@@ -1,0 +1,50 @@
+= directory
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, directory
+
+The `directory` block is used to manage directories on the system.
+You must specify the `path` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|owner
+|string
+|No
+|The directory owner.
+
+|group
+|string
+|No
+|The directory group.
+
+|mode
+|string
+|Yes
+|The directory permissions.
+
+|overwrite
+|bool
+|No
+|Overwrite the directory if it already exists.
+
+|recursive
+|bool
+|No
+|Create parent directories if they do not exist.
+|===
+
+
+Example:
+
+[source,hcl]
+----
+directory "/var/log/myapp" {
+  owner = "myapp"
+  group = "myapp"
+  mode  = "0750"
+}
+----

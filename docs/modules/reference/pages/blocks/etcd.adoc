@@ -1,0 +1,84 @@
+= etcd
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, etcd
+
+The `etcd` block is used to configure the integrated etcd service.
+Both servers and gateways require at least one `peer` block to be defined.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|name
+|string
+|Yes
+|The name of the etcd member.
+
+|server
+|bool
+|No
+|Whether this member is a server.
+
+|gateway
+|bool
+|No
+|Whether this member is a gateway.
+
+|listen_address
+|string
+|Yes (for servers)
+|The listen address for the etcd member.
+
+|initial_token
+|string
+|Yes (for servers)
+|The initial cluster token.
+|===
+
+== peer
+
+The `peer` sub-block is used to configure etcd cluster peers.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|name
+|string
+|Yes
+|The name of the peer.
+
+|address
+|string
+|Yes
+|The peer address.
+
+|port
+|int
+|Yes
+|The peer port.
+|===
+
+Example:
+
+[source,hcl]
+----
+etcd {
+  name = "etcd1"
+  server = true
+  listen_address = "10.0.0.5"
+  initial_token = "etcd-cluster-1"
+
+  peer "etcd2" {
+    address = "10.0.0.6"
+    port = 2380
+  }
+
+  peer "etcd3" {
+    address = "10.0.0.7"
+    port = 2380
+  }
+}
+----

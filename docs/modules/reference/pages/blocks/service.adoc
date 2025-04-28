@@ -1,0 +1,75 @@
+= service
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, service
+
+The `service` block is used to configure systemd services.
+You must specify the service `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|inline
+|string
+|No
+|The full systemd unit file content provided inline.
+
+|source_path
+|string
+|No
+|A path to a local file containing the systemd unit file.
+
+|enabled
+|bool
+|No
+|Whether to enable (and start) the service.
+|===
+
+Example:
+
+[source,hcl]
+----
+service "myapp" {
+  inline = <<-EOF
+    [Unit]
+    Description=My Application
+
+    [Service]
+    ExecStart=/usr/bin/myapp
+
+    [Install]
+    WantedBy=multi-user.target
+  EOF
+
+  enabled = true
+
+  drop_in "logging.conf" {
+    inline = <<-EOF
+        [Service]
+        Environment="LOG_LEVEL=debug"
+    EOF
+  }
+}
+----
+
+== drop_in
+
+The `drop_in` sub-block is used to define systemd drop-in files for a service.
+You must specify the drop-in `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|inline
+|string
+|No
+|The contents of the drop-in file provided inline.
+
+|source_path
+|string
+|No
+|A path to a local file containing the drop-in configuration.
+|===

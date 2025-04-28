@@ -1,2 +1,5 @@
 dist/
 bin/
+docs/build/
+docs/node_modules/
+.ansible

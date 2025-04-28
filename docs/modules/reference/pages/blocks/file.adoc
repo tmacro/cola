@@ -1,0 +1,71 @@
+= file
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, file
+
+The `file` block is used to manage the creation or modification of files.
+You must specify the `path` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|owner
+|string
+|No
+|The file owner.
+
+|group
+|string
+|No
+|The file group.
+
+|mode
+|string
+|Yes
+|The file permissions.
+
+|inline
+|string
+|No
+|The file contents provided inline.
+
+|source_path
+|string
+|No
+|Path to a local file whose contents should be used.
+
+|url
+|string
+|No
+|Remote URL whose contents should be fetched and used.
+
+|overwrite
+|bool
+|No
+|Overwrite the file if it already exists.
+|===
+
+Example:
+
+[source,hcl]
+----
+file "/etc/myconfig.conf" {
+  owner = "root"
+  group = "root"
+  mode  = "0644"
+
+  inline = <<-EOF
+    # This is my config
+    setting1 = true
+    setting2 = "some-value"
+  EOF
+
+  # Alternatively, you can use a local file or a URL.
+  # Relative paths are resolved relative to the configuration file.
+  # source_path = "/path/to/local/file"
+  # url = "https://example.com/myconfig.conf"
+  # overwrite = true
+}
+----

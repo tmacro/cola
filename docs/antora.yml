@@ -1,0 +1,6 @@
+name: cola
+version: ~
+title: COLA
+nav:
+  - modules/ROOT/nav.adoc
+  - modules/reference/nav.adoc

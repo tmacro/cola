@@ -1,0 +1,81 @@
+= container
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, container
+
+The `container` block is used to configure containers.
+You must specify the `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|image
+|string
+|Yes
+|The container image.
+
+|args
+|list(string)
+|No
+|The arguments to pass to the container.
+
+|restart
+|string
+|No
+|The container restart policy (e.g., `"always"`, `"on-failure"`).
+
+|cap_add
+|list(string)
+|No
+|Additional Linux capabilities to add to the container.
+
+|volume
+|sub-block
+|No
+|One or more `volume` sub-blocks that configure container volumes.
+|===
+
+Example:
+
+[source,hcl]
+----
+container "nginx" {
+  image   = "nginx:latest"
+  args    = ["-p", "80:80"]
+  restart = "always"
+
+  volume "/var/www" {
+    source = "/var/www"
+  }
+}
+----
+
+== volume
+
+The `volume` sub-block is used to configure container volumes.
+You must specify the target mount path as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|source
+|string
+|Yes
+|The path on the host that is mounted into the container.
+|===
+
+Example:
+
+[source,hcl]
+----
+container "myapp" {
+  image = "myapp:1.0"
+
+  volume "/opt/myapp/config" {
+    source = "/etc/myapp"
+  }
+}
+----

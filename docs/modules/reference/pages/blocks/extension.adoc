@@ -1,0 +1,40 @@
+== extension
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, extension
+
+The `extension` block is used to configure Systemd sysext extensions.
+You must specify the `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|version
+|string
+|Yes
+|The version of the extension.
+
+|arch
+|string
+|No
+|The architecture of the extension (e.g., `"x86_64"`, `"arm64"`).
+
+|bakery_url
+|string
+|Yes
+|The URL of the extension's bakery.
+|===
+
+
+Example:
+
+[source,hcl]
+----
+extension "consul" {
+  version    = "1.9.5"
+  arch       = "x86_64"
+  bakery_url = "https://bakery.example.com/"
+}
+----

@@ -1,0 +1,14 @@
+= Supported Configuration Blocks
+
+* xref:blocks/container.adoc[container]
+* xref:blocks/directory.adoc[directory]
+* xref:blocks/etcd.adoc[etcd]
+* xref:blocks/extension.adoc[extension]
+* xref:blocks/file.adoc[file]
+* xref:blocks/interface.adoc[interface]
+* xref:blocks/mount.adoc[mount]
+* xref:blocks/service.adoc[service]
+* xref:blocks/symlink.adoc[symlink]
+* xref:blocks/system.adoc[system]
+* xref:blocks/user.adoc[user]
+* xref:blocks/variable.adoc[variable]

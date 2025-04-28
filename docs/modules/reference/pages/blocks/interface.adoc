@@ -1,0 +1,109 @@
+= interface
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, interface
+
+The `interface` block is used to configure network interfaces.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|name
+|string
+|No
+|The interface name (e.g., `"eth0"`).
+
+|mac_address
+|string
+|No
+|The desired MAC address for the interface.
+
+|gateway
+|string
+|No
+|The default gateway.
+
+|address
+|string
+|No
+|The IPv4 or IPv6 address with CIDR (e.g., `"192.168.1.10/24"`).
+
+|addresses
+|list(string)
+|No
+|An array of IPv4 or IPv6 addresses with CIDR. Mutually exclusive with `address`.
+
+|dns
+|string
+|No
+|DNS nameserver address (e.g., `"8.8.8.8"`).
+
+|dhcp
+|bool
+|No
+|Whether to enable DHCP on this interface.
+
+|vlan
+|sub-block
+|No
+|One or more `vlan` sub-blocks for VLAN configuration.
+|===
+
+Example:
+
+[source,hcl]
+----
+interface {
+  name        = "eth0"
+  mac_address = "00:1A:2B:3C:4D:5E"
+  address     = "192.168.1.10/24"
+  gateway     = "192.168.1.1"
+  dns         = "8.8.8.8"
+  dhcp        = false
+
+  vlan "vlan10" {
+    id      = 10
+    address = "192.168.10.10/24"
+    gateway = "192.168.10.1"
+    dns     = "8.8.8.8"
+    dhcp    = false
+  }
+}
+----
+
+== vlan
+
+The `vlan` sub-block is used to define VLANs on top of an interface.
+You must specify the VLAN `name` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|id
+|int
+|Yes
+|The VLAN ID number.
+
+|address
+|string
+|No
+|The VLAN's address with CIDR notation.
+
+|gateway
+|string
+|No
+|The VLAN's default gateway.
+
+|dns
+|string
+|No
+|The VLAN's DNS server.
+
+|dhcp
+|bool
+|No
+|Whether to enable DHCP on this VLAN.
+|===

@@ -1,0 +1,67 @@
+= system
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, system
+
+The `system` block is used to configure system-wide settings. It can contain the following keys:
+
+[cols="3,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|hostname
+|string
+|Yes
+|The hostname of the machine.
+
+|timezone
+|string
+|No
+|The timezone of the machine (e.g., `"UTC"`, `"America/New_York"`).
+
+|enable_tty_auto_login
+|bool
+|No
+|Enable automatic login on the console.
+
+|power_profile
+|string
+|No
+|The power profile to use (e.g., `"performance"`, `"ondemand"`, `"powersave"`).
+
+|updates
+|sub-block
+|No
+|The `updates` sub-block configures Flatcar OS update settings.
+
+|===
+
+== updates
+
+[cols="3,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|reboot_strategy
+|string
+|No
+|The reboot strategy for updates (one of: `"off"`, `"reboot"`, `"etcd-lock"`).
+|===
+
+
+== Example
+
+[source,hcl]
+----
+system {
+  hostname = "cola"
+  timezone = "UTC"
+  enable_tty_auto_login = true
+  power_profile = "performance"
+
+  updates {
+    reboot_strategy = "reboot"
+  }
+}
+----

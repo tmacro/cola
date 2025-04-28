@@ -1,0 +1,45 @@
+= mount
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, mount
+
+The `mount` block is used to configure file system mounts.
+You must specify the `mount_point` as the block label.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|type
+|string
+|Yes
+|The filesystem type (e.g., `"ext4"`, `"nfs"`, `"tmpfs"`).
+
+|what
+|string
+|Yes
+|The source device or remote path.
+
+|where
+|string
+|Yes
+|Where to mount in the filesystem (mount target).
+
+|options
+|string
+|No
+|Additional mount options (comma-separated).
+|===
+
+Example:
+
+[source,hcl]
+----
+mount "/data" {
+  type    = "ext4"
+  what    = "/dev/sdb1"
+  where   = "/data"
+  options = "defaults"
+}
+----

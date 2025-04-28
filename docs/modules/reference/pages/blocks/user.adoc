@@ -1,0 +1,60 @@
+= user
+:description: A description of the page stored in an HTML meta tag.
+:sectanchors:
+:url-repo: https://github.com/tmacro/cola
+:page-tags: reference, blocks, user
+
+The `user` block is used to configure user accounts.
+
+[cols="1,1,1,5"]
+|===
+|Attribute |Type |Required |Description
+
+|uid
+|int
+|No
+|The user ID.
+
+|groups
+|list(string)
+|No
+|The groups the user belongs to.
+
+|shell
+|string
+|No
+|The user's shell.
+
+|home_dir
+|string
+|No
+|The user's home directory.
+
+|no_create_home
+|bool
+|No
+|Do not create the user's home directory.
+
+|ssh_authorized_keys
+|list(string)
+|No
+|The user's SSH authorized keys.
+|===
+
+You the username is specified using the block label.
+
+Example:
+
+[source,hcl]
+----
+user "alice" {
+  uid    = 1000
+  groups = ["wheel"]
+  shell  = "/bin/bash"
+  home_dir = "/home/alice"
+  ssh_authorized_keys = [
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDZlJ7...",
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDZlJ7..."
+  ]
+}
+----
