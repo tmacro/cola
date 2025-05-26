@@ -97,6 +97,6 @@ Ignition config can also be generated and bundled with the image in a single com
 cola bundle \
   --image=flatcar_production_image.bin \
   --config=machine.hcl \
-  --output=bundled-flatcar.img
+  --output=bundled-flatcar.img \
   --gen-ignition
 ----

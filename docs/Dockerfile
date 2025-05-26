@@ -1,7 +1,11 @@
-FROM asciidoctor/docker-asciidoctor:latest
+FROM node:22-alpine
 
-RUN gem install asciidoctor-multipage
+WORKDIR /repo
 
-WORKDIR /documents
+COPY package.json package-lock.json ./
 
-CMD ["/bin/bash"]
+RUN npm install
+
+WORKDIR /repo/docs
+
+ENTRYPOINT []

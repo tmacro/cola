@@ -48,8 +48,9 @@ release: $(GORELEASER)
 snapshot: $(GORELEASER)
 	$(GORELEASER) release --snapshot --clean
 
+
 .PHONY: docs
 docs:
 	@mkdir -p dist/docs
 	@docker build -t cola-docs-builder:local ./docs/
-	@docker run -v $(PWD):/documents/ cola-docs-builder:local asciidoctor-multipage -r asciidoctor-multipage -D dist/docs/ docs/index.adoc
+	@docker run -v $(PWD):/repo  cola-docs-builder:local npx antora generate antora-playbook.yaml --to-dir /repo/dist/docs
