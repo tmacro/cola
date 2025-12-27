@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -175,23 +176,38 @@ func readConfigFile(path string, evalCtx *hcl.EvalContext) (*ApplianceConfig, er
 	return &config, nil
 }
 
-func ReadConfig(paths, values []string) (*ApplianceConfig, error) {
+func ReadConfig(paths, valueFiles []string, extraValues map[string]InputValue) (*ApplianceConfig, error) {
 	configPaths, err := resolveFilePaths(paths, ".hcl")
 	if err != nil {
 		return nil, err
 	}
 
-	valuePaths, err := resolveFilePaths(values, ".cvars")
+	valuePaths, err := resolveFilePaths(valueFiles, ".cvars")
 	if err != nil {
 		return nil, err
 	}
 
-	variables, err := loadVariables(configPaths, valuePaths)
+	variables, err := LoadVariables(configPaths)
 	if err != nil {
 		return nil, err
 	}
 
-	evalCtx := buildEvalContext(variables)
+	values, err := LoadVarFiles(valuePaths)
+	if err != nil {
+		return nil, err
+	}
+
+	values = MergeValues(values, extraValues)
+	resolved, diags, err := ResolveVars(variables, values)
+	if err != nil {
+		if diags.HasErrors() {
+			for _, e := range diags.Errs() {
+				log.Err(e).Send()
+			}
+			return nil, err
+		}
+	}
+	evalCtx := MakeEvalContext(resolved)
 
 	var merged *ApplianceConfig
 	for _, cPath := range configPaths {

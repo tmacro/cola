@@ -24,10 +24,24 @@ type BundleCmd struct {
 	Ignition     string   `short:"i" help:"Path to the Ignition config." type:"existingpath" optional:""`
 	Output       string   `short:"o" help:"Output file."`
 	ExtensionDir string   `short:"e" help:"Directory containing sysexts." type:"existingdir" optional:""`
+	Variables    []string `name:"var" help:"Set values for defined variables"`
 }
 
 func (cmd *BundleCmd) Run() error {
-	cfg, err := config.ReadConfig(cmd.Config, cmd.VarFile)
+	variables := map[string]config.InputValue{}
+	for _, expr := range cmd.Variables {
+		key, value, diags, err := config.EvalVariableExpr(expr)
+		if err != nil {
+			for _, e := range diags.Errs() {
+				log.Err(e).Send()
+			}
+			return err
+		}
+
+		variables[key] = value
+	}
+
+	cfg, err := config.ReadConfig(cmd.Config, cmd.VarFile, variables)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to read configuration")
 	}

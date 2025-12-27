@@ -9,18 +9,18 @@ const (
 )
 
 type ApplianceConfig struct {
-	System      *System     `hcl:"system,block"`
-	Etcd        *Etcd       `hcl:"etcd,block"`
-	Users       []User      `hcl:"user,block"`
-	Extensions  []Extension `hcl:"extension,block"`
-	Containers  []Container `hcl:"container,block"`
-	Files       []File      `hcl:"file,block"`
-	Directories []Directory `hcl:"directory,block"`
-	Symlinks    []Symlink   `hcl:"symlink,block"`
-	Mounts      []Mount     `hcl:"mount,block"`
-	Interfaces  []Interface `hcl:"interface,block"`
-	Services    []Service   `hcl:"service,block"`
-	Variables   []Variable  `hcl:"variable,block"`
+	System      *System        `hcl:"system,block"`
+	Etcd        *Etcd          `hcl:"etcd,block"`
+	Users       []User         `hcl:"user,block"`
+	Extensions  []Extension    `hcl:"extension,block"`
+	Containers  []Container    `hcl:"container,block"`
+	Files       []File         `hcl:"file,block"`
+	Directories []Directory    `hcl:"directory,block"`
+	Symlinks    []Symlink      `hcl:"symlink,block"`
+	Mounts      []Mount        `hcl:"mount,block"`
+	Interfaces  []Interface    `hcl:"interface,block"`
+	Services    []Service      `hcl:"service,block"`
+	Variables   []VariableStub `hcl:"variable,block"`
 }
 
 type System struct {
@@ -149,8 +149,7 @@ type Peer struct {
 	Port    int    `hcl:"port"`
 }
 
-type Variable struct {
+type VariableStub struct {
 	Name   string   `hcl:"name,label"`
-	Type   string   `hcl:"type"`
 	Remain hcl.Body `hcl:",remain"`
 }
