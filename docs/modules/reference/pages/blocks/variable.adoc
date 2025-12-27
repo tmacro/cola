@@ -19,8 +19,20 @@ You must specify the variable `name` as the block label.
 |type
 |type
 |Yes
-|The type of the variable. (e.g., `string`, `number`, `boolean`).
+|The type of the variable. (e.g., `string`, `boolean`, `list(T)`).
 |===
+
+== Supported Types
+
+- `+string+`
+- `+number+`
+- `+boolean+`
+- `+any+`
+- `+list(T)+`
+- `+set(T)+`
+- `+map(T)+`
+- `+object({ K = T })+`
+- `+tuple([ T... ])+`
 
 Example:
 
@@ -29,19 +41,53 @@ Example:
 variable "mystringvar" {
   type = string
 }
-----
 
-[source,hcl]
-----
 variable "mynumvar" {
   type = number
+}
+
+variable "mylistvar" {
+  type = list(string)
+  default = ["foo"]
+}
+
+variable "mymapvar" {
+  type = map(number)
+  default = { a = 1 }
+}
+
+variable "myobjvar" {
+  type = object({ hostname = string, port = number })
+}
+
+variable "mytuplevar" {
+  type = tuple([string, number])
+  default = ["a", 1]
+}
+
+variable "mynestedvar" {
+  type = list(map(object({title = string, greetings = list(string) })))
+  default = [
+    {
+      "Fred" = {
+        title = "Mr",
+        greetings = ["hello", "sup"]
+      }
+    },
+    {
+      "World" = {
+        title = "The",
+        greetings = ["hello", "hey"]
+      }
+    }
+  ]
 }
 ----
 
 Outside of templates, variables can be referenced using the `var.myvar` syntax.
 Inside templates, variables can be referenced using `${var.myvar}`.
 
-Example:
+Examples:
 
 [source,hcl]
 ----
