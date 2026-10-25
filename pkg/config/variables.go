@@ -100,7 +100,7 @@ func ParseVariableDeclarations(filename string) (map[string]Variable, hcl.Diagno
 			{Type: "directory", LabelNames: []string{"path"}},
 			{Type: "symlink", LabelNames: []string{"path"}},
 			{Type: "mount", LabelNames: []string{"path"}},
-			{Type: "interface", LabelNames: []string{"name"}},
+			{Type: "interface"},
 			{Type: "service", LabelNames: []string{"path"}},
 			{Type: "variable", LabelNames: []string{"name"}},
 		},

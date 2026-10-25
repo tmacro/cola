@@ -4,20 +4,19 @@ Type=vlan
 
 [Network]
 Description=VLAN {{ .Name }}
-
-{{ if .DNS -}}
+{{- if .DHCP }}
+DHCP=yes
+{{- end }}
+{{- if .DNS }}
 DNS={{ .DNS }}
-{{- end -}}
+{{- end }}
+{{- range .Addresses }}
 
 [Address]
-{{ range .Addresses -}}
 Address={{ . }}
-{{ end -}}
-{{ if .DHCP -}}
-DHCP=yes
-{{ end -}}
+{{- end }}
+{{- if .Gateway }}
 
-{{ if .Gateway }}
 [Route]
 Gateway={{ .Gateway }}
-{{ end -}}
+{{- end }}

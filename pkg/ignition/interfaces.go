@@ -9,6 +9,16 @@ import (
 	"github.com/tmacro/cola/pkg/config"
 )
 
+// interfaceFileName derives the .network file name from the interface name,
+// or from the MAC address when the interface is matched by MAC alone.
+func interfaceFileName(iface config.Interface) string {
+	if iface.Name != "" {
+		return strings.ReplaceAll(iface.Name, "*", "")
+	}
+
+	return strings.ReplaceAll(strings.ToLower(iface.MACAddress), ":", "")
+}
+
 func generateInterfaces(cfg *config.ApplianceConfig, g *generator) error {
 	for _, iface := range cfg.Interfaces {
 		ifaceNet, err := templates.SystemdNetwork(iface)
@@ -16,8 +26,7 @@ func generateInterfaces(cfg *config.ApplianceConfig, g *generator) error {
 			return fmt.Errorf("failed to format systemd network contents: %v", err)
 		}
 
-		ifaceName := strings.ReplaceAll(iface.Name, "*", "")
-		filename := fmt.Sprintf("/etc/systemd/network/10-%s.network", ifaceName)
+		filename := fmt.Sprintf("/etc/systemd/network/10-%s.network", interfaceFileName(iface))
 
 		g.Files = append(g.Files, ignitionTypes.File{
 			Node: ignitionTypes.Node{

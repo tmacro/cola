@@ -88,9 +88,14 @@ func SystemdNetwork(network config.Interface) (string, error) {
 }
 
 func SystemdVlanNetwork(vlan config.VLAN) (string, error) {
+	addresses := []string{}
+	if vlan.Address != "" {
+		addresses = append(addresses, vlan.Address)
+	}
+
 	cfg := networkConfig{
 		Name:      vlan.Name,
-		Addresses: []string{vlan.Address},
+		Addresses: addresses,
 		Gateway:   vlan.Gateway,
 		DNS:       vlan.DNS,
 		DHCP:      vlan.DHCP,

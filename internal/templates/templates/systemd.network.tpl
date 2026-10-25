@@ -1,34 +1,31 @@
 [Match]
-{{ if .Name -}}
+{{- if .Name }}
 Name={{ .Name }}
 {{- end }}
-
-{{- if .MACAddress -}}
+{{- if .MACAddress }}
 MACAddress={{ .MACAddress }}
 {{- end }}
 
 [Network]
-{{- if .Gateway }}
-Gateway={{ .Gateway }}
+{{- if .DHCP }}
+DHCP=yes
 {{- end }}
-
-{{- if .DNS -}}
-DNS={{ .DNS }}
-{{- end }}
-
-
 {{- range .Addresses }}
 Address={{ . }}
 {{- end }}
-
-{{ range .VLANs -}}
+{{- if .Gateway }}
+Gateway={{ .Gateway }}
+{{- end }}
+{{- if .DNS }}
+DNS={{ .DNS }}
+{{- end }}
+{{- range .VLANs }}
 VLAN={{ .Name }}
-{{ end -}}
-
-{{- if len .VLANs -}}
+{{- end }}
+{{- if .VLANs }}
 LinkLocalAddressing=no
 LLDP=no
 EmitLLDP=no
 IPv6AcceptRA=no
 IPv6SendRA=no
-{{ end -}}
+{{- end }}
